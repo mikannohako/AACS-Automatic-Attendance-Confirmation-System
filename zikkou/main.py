@@ -45,9 +45,9 @@ while True:
 
     if event == sg.WIN_CLOSED:
         
-        endresult = messagebox.askquestion('警告', '本当に閉じますか？')
+        endresult = messagebox.askquestion('警告', '本当に閉じますか？', icon='warning')
         if endresult == 'yes':
-            # 行ごとに条件を確認し、条件が満たされた場合に背景色を変更
+            # 行ごとに条件を確認し、条件が満たされた場合に背景色を変更-
             for row_number in range(2, sheet.max_row + 1):
                 attendance_status = sheet.cell(row=row_number, column=4).value
                 
@@ -79,6 +79,15 @@ while True:
             
             conn.close()
             break
+        else:
+            window.close()  # ウィンドウを閉じてから新しいウィンドウを作成
+            layout = [
+                [sg.Text('名前を入力してください。', key="-INPUT-")],
+                [sg.InputText(key="-NAME-")],
+                [sg.Button('OK', bind_return_key=True)]
+            ]
+            window = sg.Window('log in', layout)
+            continue
     
     if event == 'OK' or event == 'Escape:13':
         name = values["-NAME-"]
