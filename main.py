@@ -43,7 +43,7 @@ window = sg.Window('log in', layout)
 while True:
     event, values = window.read()
 
-    if event == sg.WIN_CLOSED:
+    if event == sg.WIN_CLOSED: # 閉じられるときの処理
         
         endresult = messagebox.askquestion('警告', '本当に閉じますか？', icon='warning')
         if endresult == 'yes':
@@ -89,7 +89,7 @@ while True:
             window = sg.Window('log in', layout)
             continue
     
-    if event == 'OK' or event == 'Escape:13':
+    if event == 'OK' or event == 'Escape:13': # OKが押されたときの処理
         name = values["-NAME-"]
         cursor.execute('SELECT ID, GradeinSchool FROM Register WHERE Name = ?', (name,))
         result = cursor.fetchone()
