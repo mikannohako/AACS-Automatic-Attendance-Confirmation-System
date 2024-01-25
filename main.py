@@ -38,9 +38,10 @@ for data in all_data:
 # 保存
 workbook.save('temp.xlsx')
 
+
 # GUI作成
 layout = [
-    [sg.Text('名前を入力してください。', key="-INPUT-")],
+    [sg.Text('苗字を入力してください', key="-INPUT-")],
     [sg.InputText(key="-NAME-")],
     [sg.Button('OK', bind_return_key=True)]
 ]
@@ -115,9 +116,19 @@ while True:
                 if sheet.cell(row=row, column=2).value == name:
                     sheet.cell(row=row, column=4, value='出席')
                     workbook.save('temp.xlsx')
-                    messagebox.showinfo('完了', f'{name} の出席処理は完了しました。')
+                    information = f'{name}さんの出席処理は完了しました。'
                     window["-NAME-"].update("")  # 入力フィールドをクリア
                     conn.commit()  # 変更を確定
+                    
+                    # ウィンドウを閉じてから新しいウィンドウを作成
+                    window.close()
+                    layout = [
+                        [sg.Text(information)],
+                        [sg.Text('名前を入力してください。', key="-INPUT-")],
+                        [sg.InputText(key="-NAME-")],
+                        [sg.Button('OK', bind_return_key=True)]
+                    ]
+                    window = sg.Window('log in', layout)
                     break
         else:
             # 失敗処理
