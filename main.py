@@ -1,3 +1,4 @@
+# インポート
 import PySimpleGUI as sg
 
 import os
@@ -7,22 +8,26 @@ import sqlite3
 import openpyxl
 from openpyxl.styles import PatternFill
 
-# 新しいWorkbook（エクセルファイル）を作成し、ファイル名を指定
+# 新しいWorkbook（エクセルファイル）を作成して、ファイル名を指定
 workbook = openpyxl.Workbook()
+# アクティブなシートを開く
 sheet = workbook.active
 
+# 項目の作成
 sheet['A1'] = 'ID'
 sheet['B1'] = '名前'
 sheet['C1'] = '学年'
 sheet['D1'] = '出席状況'
 
+# DBに接続する
 conn = sqlite3.connect('Register.db')
 cursor = conn.cursor()
 
+# すべてのデータを取得
 cursor.execute('SELECT ID, Name, GradeinSchool FROM Register')
 all_data = cursor.fetchall()
 
-# Process each data and update the Excel sheet
+# エクセルにすべてのデータを入力
 for data in all_data:
     row_number = sheet.max_row + 1
     sheet.cell(row=row_number, column=1, value=data[0])  # ID
@@ -30,21 +35,26 @@ for data in all_data:
     sheet.cell(row=row_number, column=3, value=data[2])  # 学年
     sheet.cell(row=row_number, column=4, value='未出席')  # 初めは未出席として設定
 
+# 保存
 workbook.save('temp.xlsx')
 
+# GUI作成
 layout = [
     [sg.Text('名前を入力してください。', key="-INPUT-")],
     [sg.InputText(key="-NAME-")],
     [sg.Button('OK', bind_return_key=True)]
 ]
 
+# ウィンドウ生成
 window = sg.Window('log in', layout)
 
 while True:
+    # ウィンドウの入力値を読み取る
     event, values = window.read()
 
     if event == sg.WIN_CLOSED: # 閉じられるときの処理
         
+        # 警告メッセージ表示
         endresult = messagebox.askquestion('警告', '本当に閉じますか？', icon='warning')
         if endresult == 'yes':
             # 行ごとに条件を確認し、条件が満たされた場合に背景色を変更-
@@ -80,7 +90,8 @@ while True:
             conn.close()
             break
         else:
-            window.close()  # ウィンドウを閉じてから新しいウィンドウを作成
+            # ウィンドウを閉じてから新しいウィンドウを作成
+            window.close()
             layout = [
                 [sg.Text('名前を入力してください。', key="-INPUT-")],
                 [sg.InputText(key="-NAME-")],
@@ -109,6 +120,7 @@ while True:
                     conn.commit()  # 変更を確定
                     break
         else:
+            # 失敗処理
             print(f"{name} はデータベースに存在しません。")
             messagebox.showinfo('失敗', f'{name} はデータベースに存在しません。')
             window["-NAME-"].update("")  # 入力フィールドをクリア
