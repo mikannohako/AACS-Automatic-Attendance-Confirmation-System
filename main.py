@@ -118,7 +118,7 @@ while True:
                     print(f"{name} の処理は正常に終了しました。")
                     information = f'{name}さんの出席処理は完了しました。'
                     window["-NAME-"].update("")  # 入力フィールドをクリア
-                    conn.commit()  # 変更を確定
+                    conn.commit()  # 更を確変定
                     
                     # ウィンドウを閉じてから新しいウィンドウを作成
                     window.close()
