@@ -94,7 +94,7 @@ while True:
             # ウィンドウを閉じてから新しいウィンドウを作成
             window.close()
             layout = [
-                [sg.Text('名前を入力してください。', key="-INPUT-")],
+                [sg.Text('苗字を入力してください。', key="-INPUT-")],
                 [sg.InputText(key="-NAME-")],
                 [sg.Button('OK', bind_return_key=True)]
             ]
@@ -124,7 +124,7 @@ while True:
                     window.close()
                     layout = [
                         [sg.Text(information)],
-                        [sg.Text('名前を入力してください。', key="-INPUT-")],
+                        [sg.Text('苗字を入力してください。', key="-INPUT-")],
                         [sg.InputText(key="-NAME-")],
                         [sg.Button('OK', bind_return_key=True)]
                     ]
