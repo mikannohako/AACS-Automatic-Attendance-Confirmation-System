@@ -94,7 +94,7 @@ while True:
             # ウィンドウを閉じてから新しいウィンドウを作成
             window.close()
             layout = [
-                [sg.Text('名前を入力してください。', key="-INPUT-")],
+                [sg.Text('苗字を入力してください。', key="-INPUT-")],
                 [sg.InputText(key="-NAME-")],
                 [sg.Button('OK', bind_return_key=True)]
             ]
@@ -109,13 +109,13 @@ while True:
         print('入力された値：', name)
         
         if result:
-            print(f"{name} はデータベースに存在します。")
             
             # 名前が一致する行を探し、出席を記録
             for row in range(1, sheet.max_row + 1):
                 if sheet.cell(row=row, column=2).value == name:
                     sheet.cell(row=row, column=4, value='出席')
                     workbook.save('temp.xlsx')
+                    print(f"{name} の処理は正常に終了しました。")
                     information = f'{name}さんの出席処理は完了しました。'
                     window["-NAME-"].update("")  # 入力フィールドをクリア
                     conn.commit()  # 変更を確定
@@ -124,7 +124,7 @@ while True:
                     window.close()
                     layout = [
                         [sg.Text(information)],
-                        [sg.Text('名前を入力してください。', key="-INPUT-")],
+                        [sg.Text('苗字を入力してください。', key="-INPUT-")],
                         [sg.InputText(key="-NAME-")],
                         [sg.Button('OK', bind_return_key=True)]
                     ]
