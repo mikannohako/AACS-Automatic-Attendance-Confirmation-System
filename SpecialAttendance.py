@@ -78,4 +78,4 @@ else:
 
 current_date = datetime.now().strftime("%Y")
 # エクセルファイルを保存
-workbook.save("{current_date}Attendance records.xlsx")
+workbook.save(f"{current_date}Attendance records.xlsx")
