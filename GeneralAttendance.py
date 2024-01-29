@@ -17,9 +17,10 @@ def exit_with_error(message):
 
 #? 変数の初期設定
 
-target_cell = None  # target_cellを初期化
+name_column_index = None
+date_row_index = None
 
-# 時間変数の設定89
+# 時間変数の設定
 current_date = datetime.now()
 current_date_y = current_date.strftime("%Y")
 current_date_m = current_date.strftime("%m")
@@ -40,6 +41,7 @@ try:
     ar_workbook = load_workbook(ar_filename)
 except FileNotFoundError:
     exit_with_error("File not found")
+
 # アクティブなシートを開く
 temp_sheet = temp_workbook.active
 ar_sheet = ar_workbook.active
@@ -52,8 +54,10 @@ temp_sheet['C1'] = '出席状況'
 #? DB初期設定
 
 # DBに接続する
+
 conn = sqlite3.connect('Register.db')
-cursor = conn.cursor()
+cursor = conn.cursor()    
+
 
 # すべてのデータを取得
 cursor.execute('SELECT Name, GradeinSchool FROM Register')
@@ -111,8 +115,6 @@ while True:
         print('入力された値：', name)
         
         if result:
-            print(f"{name} はデータベースに存在します。")
-            
             # 名前が一致する行を探し、出席を記録
             for row in range(1, temp_sheet.max_row + 1):
                 if temp_sheet.cell(row=row, column=1).value == name:
@@ -121,29 +123,6 @@ while True:
                     information = f'{name}さんの出席処理は完了しました。'
                     window["-NAME-"].update("")  # 入力フィールドをクリア
                     conn.commit()  # 変更を確定
-                    
-                    #? ARに保存
-                    
-                    for row in temp_sheet.iter_rows():
-                        for cell in row:
-                            if cell.value == name and str(cell.offset(column=2).value) == current_date_d:
-                                target_cell = cell
-                                break
-                        if target_cell:
-                            break
-                    
-                    
-                    if target_cell:
-                        print(f"名前が'{name}'で、日付が'{current_date_d}'のセルは、行:{target_cell.row} 列:{target_cell.column} にあります。")
-                        print(target_cell.row)
-                        print(target_cell.column)
-                        
-                        # 最初に見つかった行の最初に見つかったセルに「出席」という値を設定する
-                        ar_sheet.cell(row=target_cell.row, column=target_cell.column).value = '出席'
-                        ar_workbook.save(ar_filename)
-                    else:
-                        print(f"名前が'{name}'で、日付が'{current_date_d}'のセルは見つかりませんでした。")
-                    
                     
                     # ウィンドウを閉じてから新しいウィンドウを作成
                     window.close()
@@ -159,6 +138,12 @@ while True:
         # 警告メッセージ表示
         endresult = messagebox.askquestion('警告', '本当に閉じますか？', icon='warning')
         if endresult == 'yes': # yes
+            
+            start_row = 2
+            end_row = 26
+            start_column = 3
+            end_column = 3
+            
             
             
             #? 一時ファイル削除

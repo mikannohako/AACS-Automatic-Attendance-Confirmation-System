@@ -79,3 +79,5 @@ else:
 current_date = datetime.now().strftime("%Y")
 # エクセルファイルを保存
 workbook.save(f"{current_date}Attendance records.xlsx")
+
+messagebox.showinfo('完了', '操作は正常に終了しました。')
