@@ -8,6 +8,8 @@
         "tabnine",
         "monthlyname",
         "sheetnames",
-        "zenhan"
+        "zenhan",
+        "target_row",
+        "target_string"
     ]
 }

@@ -23,7 +23,7 @@ def create_month_sheet(workbook, month):
 def input_date_data(sheet, month):
     days_in_month = 30 if month in ["04", "06", "09", "11"] else 31 if month != "02" else 29  # 月ごとの日数
     for day in range(1, days_in_month + 1):
-        sheet.cell(row=1, column=day + 2).value = f"{day}日"
+        sheet.cell(row=1, column=day + 2).value = day
     # 学年の列を追加
     sheet.cell(row=1, column=1).value = '名前'
     sheet.cell(row=1, column=2).value = '学年'
