@@ -1,6 +1,6 @@
 # インポート
 import PySimpleGUI as sg
-
+import sys
 import os
 from datetime import datetime
 from tkinter import messagebox
@@ -9,10 +9,21 @@ import openpyxl
 from openpyxl.styles import PatternFill
 from openpyxl import load_workbook
 
+#? エラー時の処理の作成
+def exit_with_error(message):
+    print(f"エラー: {message}")
+    sys.exit(1)  # アプリケーションをエラーコード 1 で終了します
+
 #? 変数の初期設定
+
+# 現在の日付を取得
+current_date_Y = datetime.now().strftime("%Y")
+current_date_M = datetime.now().strftime("%m")
+current_date_D = datetime.now().strftime("%d")
 
 # 一時ファイル名
 temp_filename = "temp.xlsx"
+AC_filename = f"{current_date_Y}Attendance records.xlsx"
 
 #? Excel初期設定
 
@@ -113,8 +124,8 @@ while True:
         # 警告メッセージ表示
         endresult = messagebox.askquestion('警告', '本当に閉じますか？', icon='warning')
         if endresult == 'yes': # yes
-            # 現在の日付を取得
-            current_date = datetime.now().strftime("%Y-%m-%d")
+            #? 一時ファイルからACにデータを入力
+            
             
             #? 一時ファイル削除
             
