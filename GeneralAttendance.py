@@ -99,6 +99,15 @@ def mainwindowshow(): #?
     window.Maximize()
     return window  # window変数を返す
 
+def get_name_by_id(input_id):
+    # IDに対応するnameをクエリで検索
+    cursor.execute("SELECT Name FROM Register WHERE ID=?", (input_id,))
+    result = cursor.fetchone()  # 一致する最初の行を取得
+    if result:
+        return result[0]  # nameを返す
+    else:
+        return "IDに対応する名前が見つかりません"
+
 window = mainwindowshow()  # mainwindowshow()関数を呼び出して、window変数に格納する
 
 while True:
@@ -107,11 +116,17 @@ while True:
     
     if event == 'OK' or event == 'Escape:13': #? OKが押されたときの処理
         name = values["-NAME-"]
-        cursor.execute('SELECT GradeinSchool FROM Register WHERE Name = ?', (name,))
-        result = cursor.fetchone()
+        
+        if name.isdigit():
+            name = get_name_by_id(int(name))
+            result = name
+        else:
+            cursor.execute('SELECT GradeinSchool FROM Register WHERE Name = ?', (name,))
+            result = cursor.fetchone()
+        
+        
         
         print('入力された値：', name)
-        
         if result:
             # 名前が一致する行を探し、出席を記録
             for row in range(1, temp_sheet.max_row + 1):

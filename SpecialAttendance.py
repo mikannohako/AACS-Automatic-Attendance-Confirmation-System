@@ -72,7 +72,7 @@ sheet_name_to_delete = "Sheet"
 if sheet_name_to_delete in workbook.sheetnames:
     sheet_to_delete = workbook[sheet_name_to_delete]
     workbook.remove(sheet_to_delete)
-    print(f"{sheet_name_to_delete} シートを削除しました。")
+    print("一時シート削除>>>正常終了")
 else:
     print(f"{sheet_name_to_delete} シートは存在しません。")
 
