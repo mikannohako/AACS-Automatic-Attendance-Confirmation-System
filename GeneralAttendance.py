@@ -30,21 +30,19 @@ current_date_m = current_date.strftime("%M")
 current_date_s = current_date.strftime("%S")
 
 # 一時ファイル名
-temp_filename = "temp.xlsx"
 ar_filename = f"{current_date_y}Attendance records.xlsx"
 
 #? Excel初期設定
 
 # 新しいWorkbook（エクセルファイル）を作成して、ファイル名を指定
-temp_workbook = openpyxl.Workbook()
 try:
-    ar_workbook = load_workbook(ar_filename)
+    workbook = load_workbook(ar_filename)
 except FileNotFoundError:
     exit_with_error("File not found")
 
 # アクティブなシートを開く
-temp_sheet = temp_workbook.active
-ar_sheet = ar_workbook.active
+temp_sheet = workbook.create_sheet("temp")  
+sheet = workbook.active
 
 # 項目の作成
 temp_sheet['A1'] = '名前'
@@ -73,7 +71,7 @@ for data in all_data:
     temp_sheet.cell(row=row_number, column=3, value='未出席')  # 初めは未出席として設定
 
 # 保存
-temp_workbook.save(temp_filename)
+workbook.save(ar_filename)
 
 information = '記録なし'
 
@@ -119,7 +117,7 @@ while True:
             for row in range(1, temp_sheet.max_row + 1):
                 if temp_sheet.cell(row=row, column=1).value == name:
                     temp_sheet.cell(row=row, column=3, value='出席')
-                    temp_workbook.save(temp_filename)
+                    workbook.save(ar_filename)
                     information = f'{name}さんの出席処理は完了しました。'
                     window["-NAME-"].update("")  # 入力フィールドをクリア
                     conn.commit()  # 変更を確定
@@ -144,16 +142,35 @@ while True:
             start_column = 3
             end_column = 3
             
+            # コピー先の開始セルの指定
+            dest_start_row = 2
+            dest_start_column = int(current_date_d) + 2 # 文字列を整数値に変換
             
+            # 範囲をコピーしてコピー先のセルに貼り付ける
+            for row in range(start_row, end_row + 1):
+                for col in range(start_column, end_column + 1):
+                    cell_value = temp_sheet.cell(row=row, column=col).value
+                    dest_row = row - start_row + dest_start_row
+                    dest_col = col - start_column + dest_start_column
+                    dest_cell = sheet.cell(row=dest_row, column=dest_col)
+                    dest_cell.value = cell_value
             
-            #? 一時ファイル削除
+            workbook.save(ar_filename)
             
-            # ファイルが存在するかどうかを確認
-            if os.path.exists(temp_filename):
-                # ファイルを削除
-                os.remove(temp_filename)
+            #? 一時シート削除
+            
+            # 削除したいシート名を指定
+            sheet_name_to_delete = "temp"
+            
+            # シートを削除
+            if sheet_name_to_delete in workbook.sheetnames:
+                sheet_to_delete = workbook[sheet_name_to_delete]
+                workbook.remove(sheet_to_delete)
+                print(f"{sheet_name_to_delete} シートを削除しました。")
             else:
-                print("一時ファイルの削除に失敗しました。")
+                print(f"{sheet_name_to_delete} シートは存在しません。")
+            
+            workbook.save(ar_filename)
             
             messagebox.showinfo('完了', '記録終了は正常に終了しました。')
             conn.close()
