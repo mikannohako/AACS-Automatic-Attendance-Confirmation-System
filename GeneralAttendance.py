@@ -81,12 +81,6 @@ information = '記録なし'
 # カメラを起動
 cap = cv2.VideoCapture(1)
 
-kawidth = 640
-kaheight = 480
-
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, kawidth)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, kaheight)
-
 # QRコードを検出するためのdetectorを作成
 detector = cv2.QRCodeDetector()
 
@@ -155,7 +149,8 @@ while True: #? 無限ループ
     
     # OpenCVのBGR形式をPySimpleGUIの画像形式に変換してウィンドウに表示
     if ret:
-        imgbytes = cv2.imencode('.png', frame)[1].tobytes()
+        resized_frame = cv2.resize(frame, (400, 300))
+        imgbytes = cv2.imencode('.png', resized_frame)[1].tobytes()
         window['-IMAGE-'].update(data=imgbytes)
     
     
