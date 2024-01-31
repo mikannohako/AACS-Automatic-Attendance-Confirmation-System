@@ -87,10 +87,14 @@ detector = cv2.QRCodeDetector()
 # last_qr_dataの初期化
 last_qr_data = None
 
+capbool = False
+
 def mainwindowshow(): #? メインウィンドウ表示
     
     # シートから未出席のデータを取得してリストに格納
     data = []
+    
+    
     
     for row in temp_sheet.iter_rows(values_only=True):
         if row[2] == '未出席':  # 未出席のデータのみを抽出
@@ -103,7 +107,7 @@ def mainwindowshow(): #? メインウィンドウ表示
         [sg.Text(information, font=("Helvetica", 15))],
         [sg.Text('苗字を入力してください。', key="-INPUT-", font=("Helvetica", 15))],
         [sg.InputText(key="-NAME-", font=("Helvetica", 15))],
-        [sg.Button('OK', bind_return_key=True, font=("Helvetica", 15))],
+        [sg.Button('OK', bind_return_key=True, font=("Helvetica", 15)), sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))],
         [sg.Table(values=data, headings=header, display_row_numbers=False, auto_size_columns=False, num_rows=min(20, len(data)))]
     ]
     
@@ -117,11 +121,11 @@ def mainwindowshow(): #? メインウィンドウ表示
         [sg.Column(left_column), sg.Column(right_column)]
     ]
     
-    window = sg.Window('出席処理', layout, finalize=True)
+    window = sg.Window('出席処理', layout, finalize=True, disable_close=True)
     window.Maximize()
     return window  # window変数を返す
 
-def get_name_by_id(input_id):
+def get_name_by_id(input_id): #? IDから名前を取得
     # IDに対応するnameをクエリで検索
     cursor.execute("SELECT Name FROM Register WHERE ID=?", (input_id,))
     result = cursor.fetchone()  # 一致する最初の行を取得
@@ -146,6 +150,9 @@ while True: #? 無限ループ
     if qr_data and qr_data != last_qr_data:
         window['-QR_DATA-'].update(f'QRコードの中の数値: {qr_data}')
         last_qr_data = qr_data
+        capbool = True
+        name = qr_data
+        print(name)
     
     # OpenCVのBGR形式をPySimpleGUIの画像形式に変換してウィンドウに表示
     if ret:
@@ -153,10 +160,15 @@ while True: #? 無限ループ
         imgbytes = cv2.imencode('.png', resized_frame)[1].tobytes()
         window['-IMAGE-'].update(data=imgbytes)
     
+    # メインループ内のウィンドウを閉じるイベントの処理部分
+    if event == sg.WIN_CLOSED:
+        messagebox.showinfo('警告', 'windowを閉じるのは「終了」ボタンから行ってください。')
+        pass
     
-    
-    if event == 'OK' or event == 'Escape:13': #? OKが押されたときの処理
-        name = values["-NAME-"]
+    if event == 'OK' or event == 'Escape:13' or capbool: #? OKが押されたときの処理
+        capbool = False
+        if not name:
+            name = values["-NAME-"]
         
         if name.isdigit():
             name = get_name_by_id(int(name))
@@ -188,7 +200,10 @@ while True: #? 無限ループ
             messagebox.showinfo('失敗', f'{name} はデータベースに存在しません。')
             window["-NAME-"].update("")  # 入力フィールドをクリア
     
-    if event == sg.WIN_CLOSED: #? 閉じられるときの処理
+    if event == '終了': #? 閉じられるときの処理
+        
+        # カメラを解放
+        cap.release()
         
         window.close()
         
@@ -239,5 +254,3 @@ while True: #? 無限ループ
             window.close()
             window = mainwindowshow()
             continue
-# カメラを解放
-cap.release()
