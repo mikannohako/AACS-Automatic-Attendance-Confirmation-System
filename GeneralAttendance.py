@@ -8,6 +8,8 @@ import sqlite3
 import openpyxl
 from openpyxl.styles import PatternFill
 from openpyxl import load_workbook
+import cv2
+import time
 
 #? エラー時の処理の作成
 def exit_with_error(message):
@@ -75,7 +77,24 @@ workbook.save(ar_filename)
 
 information = '記録なし'
 
-def mainwindowshow(): #? 
+#? 二次元コード
+# カメラを起動
+cap = cv2.VideoCapture(1)
+
+kawidth = 640
+kaheight = 480
+
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, kawidth)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, kaheight)
+
+# QRコードを検出するためのdetectorを作成
+detector = cv2.QRCodeDetector()
+
+# last_qr_dataの初期化
+last_qr_data = None
+
+def mainwindowshow(): #? メインウィンドウ表示
+    
     # シートから未出席のデータを取得してリストに格納
     data = []
     
@@ -86,13 +105,22 @@ def mainwindowshow(): #?
     # ヘッダーを取得
     header = list(temp_sheet.iter_rows(min_row=1, max_row=1, values_only=True))[0]
     
-    # GUI画面のレイアウト
-    layout = [
+    left_column = [
         [sg.Text(information, font=("Helvetica", 15))],
         [sg.Text('苗字を入力してください。', key="-INPUT-", font=("Helvetica", 15))],
         [sg.InputText(key="-NAME-", font=("Helvetica", 15))],
         [sg.Button('OK', bind_return_key=True, font=("Helvetica", 15))],
         [sg.Table(values=data, headings=header, display_row_numbers=False, auto_size_columns=False, num_rows=min(20, len(data)))]
+    ]
+    
+    right_column = [
+        [sg.Image(filename='', key="-IMAGE-")],
+        [sg.Text('', key="-QR_DATA-")],
+    ]
+    
+    # GUI画面のレイアウト
+    layout = [
+        [sg.Column(left_column), sg.Column(right_column)]
     ]
     
     window = sg.Window('出席処理', layout, finalize=True)
@@ -110,9 +138,27 @@ def get_name_by_id(input_id):
 
 window = mainwindowshow()  # mainwindowshow()関数を呼び出して、window変数に格納する
 
-while True:
-    # ウィンドウの入力値を読み取る
-    event, values = window.read()
+while True: #? 無限ループ
+    # イベントとデータの読み込み
+    event, values = window.read(timeout=20)
+    
+    # カメラからフレームを取得
+    ret, frame = cap.read()
+    
+    # QRコードを検出
+    qr_data, _, _ = detector.detectAndDecode(frame)
+    
+    # 読み取ったQRコードがあれば
+    if qr_data and qr_data != last_qr_data:
+        window['-QR_DATA-'].update(f'QRコードの中の数値: {qr_data}')
+        last_qr_data = qr_data
+    
+    # OpenCVのBGR形式をPySimpleGUIの画像形式に変換してウィンドウに表示
+    if ret:
+        imgbytes = cv2.imencode('.png', frame)[1].tobytes()
+        window['-IMAGE-'].update(data=imgbytes)
+    
+    
     
     if event == 'OK' or event == 'Escape:13': #? OKが押されたときの処理
         name = values["-NAME-"]
@@ -148,6 +194,9 @@ while True:
             window["-NAME-"].update("")  # 入力フィールドをクリア
     
     if event == sg.WIN_CLOSED: #? 閉じられるときの処理
+        
+        window.close()
+        
         # 警告メッセージ表示
         endresult = messagebox.askquestion('警告', '本当に閉じますか？', icon='warning')
         if endresult == 'yes': # yes
@@ -195,3 +244,5 @@ while True:
             window.close()
             window = mainwindowshow()
             continue
+# カメラを解放
+cap.release()

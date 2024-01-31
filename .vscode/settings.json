@@ -11,6 +11,11 @@
         "zenhan",
         "target_row",
         "target_string",
-        "imshow"
+        "imshow",
+        "imgbytes",
+        "imencode",
+        "tobytes",
+        "kawidth",
+        "kaheight"
     ]
 }
