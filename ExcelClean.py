@@ -58,3 +58,4 @@ print("done")
 messagebox.showinfo('完了', '正常に終了しました。')
 
 subprocess.run(["python", "Menu.py"])
+sys.exit(0)
