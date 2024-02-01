@@ -11,6 +11,7 @@ from openpyxl import load_workbook
 import cv2
 import time
 import json
+import subprocess
 
 #? config設定
 
@@ -29,6 +30,7 @@ def exit_with_error(message):
     sys.exit(1)  # アプリケーションをエラーコード 1 で終了します
 
 #? 変数の初期設定
+
 
 name_column_index = None
 date_row_index = None
@@ -52,7 +54,9 @@ ar_filename = f"{current_date_y}Attendance records.xlsx"
 try:
     workbook = load_workbook(ar_filename)
 except FileNotFoundError:
-    exit_with_error("File not found")
+    messagebox.showerror("Error: File not found", "記録用のファイルがありません。\n初期起動を行ってください。")
+    subprocess.run(["python", "Menu.py"])
+    sys.exit(0)
 
 # アクティブなシートを開く
 temp_sheet = workbook.create_sheet("temp")  
