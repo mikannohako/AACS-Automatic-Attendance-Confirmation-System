@@ -17,6 +17,8 @@
         "tobytes",
         "kawidth",
         "kaheight",
-        "capbool"
+        "capbool",
+        "ADFF2F",
+        "event"
     ]
 }

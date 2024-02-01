@@ -10,8 +10,19 @@ from openpyxl.styles import PatternFill
 from openpyxl import load_workbook
 import cv2
 import time
+import json
+
+#? config設定
+
+# 設定ファイルのパス
+config_file_path = 'config.json'
+
+# 設定ファイルの読み込み
+with open(config_file_path, 'r') as config_file:
+    config_data = json.load(config_file)
 
 #? エラー時の処理の作成
+
 def exit_with_error(message):
     print(f"Error: {message}")
     messagebox.showerror("Error:", message)
@@ -21,6 +32,7 @@ def exit_with_error(message):
 
 name_column_index = None
 date_row_index = None
+name = None  # 初期値を設定
 
 # 時間変数の設定
 current_date = datetime.now()
@@ -72,9 +84,9 @@ for data in all_data:
     temp_sheet.cell(row=row_number, column=1, value=data[0])  # 名前
     temp_sheet.cell(row=row_number, column=2, value=data[1])  # 学年
 
-end_row = len(all_data) # データの数に基づいて終了行を決定する
-for row_number in range(2, end_row + 2): # 2からend_row + 1までの行数を繰り返し処理
-    temp_sheet.cell(row=row_number, column=3, value='未出席') # 初めは未出席として設定
+end_row = len(all_data) + 1 # データの数に基づいて終了行を決定する
+for row_number in range(2, end_row + 1): # 2からend_row + 1までの行数を繰り返し処理
+    temp_sheet.cell(row=row_number, column=3, value='欠席') # 初めは欠席として設定
 
 
 # 保存
@@ -84,7 +96,7 @@ information = '記録なし'
 
 #? 二次元コード
 # カメラを起動
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(config_data["Camera_number"])
 
 # QRコードを検出するためのdetectorを作成
 detector = cv2.QRCodeDetector()
@@ -96,15 +108,13 @@ capbool = False
 
 def mainwindowshow(): #? メインウィンドウ表示
     
-    # シートから未出席のデータを取得してリストに格納
+    # シートから欠席のデータを取得してリストに格納
     data = []
     
-    
-    
     for row in temp_sheet.iter_rows(values_only=True):
-        if row[2] == '未出席':  # 未出席のデータのみを抽出
+        if row[2] == '欠席':  # 欠席のデータのみを抽出
             data.append(list(row))  # タプルからリストに変換して追加
-            
+    
     # ヘッダーを取得
     header = list(temp_sheet.iter_rows(min_row=1, max_row=1, values_only=True))[0]
     
@@ -126,7 +136,7 @@ def mainwindowshow(): #? メインウィンドウ表示
         [sg.Column(left_column), sg.Column(right_column)]
     ]
     
-    window = sg.Window('出席処理', layout, finalize=True, disable_close=True)
+    window = sg.Window('出席処理', layout, finalize=True)
     window.Maximize()
     return window  # window変数を返す
 
@@ -172,7 +182,8 @@ while True: #? 無限ループ
     #? ウィンドウを閉じる時の処理
     if event == sg.WIN_CLOSED:
         messagebox.showinfo('警告', 'windowを閉じるのは「終了」ボタンから行ってください。')
-        pass
+        window.close()
+        window = mainwindowshow()
     
     #? OKが押されたときの処理
     if event == 'OK' or event == 'Escape:13' or capbool:
@@ -224,7 +235,7 @@ while True: #? 無限ループ
         if endresult == 'yes': # yes
             
             start_row = 2
-            end_row = 26
+            end_row = len(all_data) + 1
             start_column = 3
             end_column = 3
             

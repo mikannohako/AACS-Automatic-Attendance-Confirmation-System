@@ -8,6 +8,7 @@ import openpyxl
 from openpyxl.styles import PatternFill
 from openpyxl import load_workbook
 from openpyxl.worksheet.table import Table, TableStyleInfo
+import subprocess
 
 # 月ごとのシートを作成する関数
 def create_month_sheet(workbook, month):
@@ -83,3 +84,5 @@ current_date = datetime.now().strftime("%Y")
 workbook.save(f"{current_date}Attendance records.xlsx")
 
 messagebox.showinfo('完了', '操作は正常に終了しました。')
+
+subprocess.run(["python", "Menu.py"])
