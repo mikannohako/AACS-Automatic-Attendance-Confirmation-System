@@ -51,7 +51,9 @@ for month in range(1, 13):
         sheet.cell(row=row_number, column=1, value=data[0])  # 名前
         sheet.cell(row=row_number, column=2, value=data[1])  # 学年
     
-    table = openpyxl.worksheet.table.Table(displayName=f"Table{month}", ref="A1:B26")
+    end_row = len(all_data) + 1 # データの数に基づいて終了行を決定する
+    table_range = f"A1:B{end_row}"  # 範囲を変数に格納する
+    table = openpyxl.worksheet.table.Table(displayName=f"Table{month}", ref=table_range)
     
     # スタイル設定
     style = TableStyleInfo(

@@ -1,4 +1,4 @@
-# インポート
+#? インポート
 import PySimpleGUI as sg
 import sys
 import os
@@ -28,7 +28,7 @@ current_date_y = current_date.strftime("%Y")
 current_date_m = current_date.strftime("%m")
 current_date_d = current_date.strftime("%d")
 current_date_h = current_date.strftime("%H")
-current_date_m = current_date.strftime("%M")
+current_date_M = current_date.strftime("%M")
 current_date_s = current_date.strftime("%S")
 
 # 一時ファイル名
@@ -44,7 +44,8 @@ except FileNotFoundError:
 
 # アクティブなシートを開く
 temp_sheet = workbook.create_sheet("temp")  
-sheet = workbook.active
+day_int = int(current_date_m)
+sheet = workbook[f"{day_int}月"]
 
 # 項目の作成
 temp_sheet['A1'] = '名前'
@@ -70,7 +71,11 @@ for data in all_data:
     row_number = temp_sheet.max_row + 1
     temp_sheet.cell(row=row_number, column=1, value=data[0])  # 名前
     temp_sheet.cell(row=row_number, column=2, value=data[1])  # 学年
-    temp_sheet.cell(row=row_number, column=3, value='未出席')  # 初めは未出席として設定
+
+end_row = len(all_data) # データの数に基づいて終了行を決定する
+for row_number in range(2, end_row + 2): # 2からend_row + 1までの行数を繰り返し処理
+    temp_sheet.cell(row=row_number, column=3, value='未出席') # 初めは未出席として設定
+
 
 # 保存
 workbook.save(ar_filename)
@@ -104,7 +109,7 @@ def mainwindowshow(): #? メインウィンドウ表示
     header = list(temp_sheet.iter_rows(min_row=1, max_row=1, values_only=True))[0]
     
     left_column = [
-        [sg.Text(information, font=("Helvetica", 15))],
+        [sg.Text(information, font=("Helvetica", 40))],
         [sg.Text('苗字を入力してください。', key="-INPUT-", font=("Helvetica", 15))],
         [sg.InputText(key="-NAME-", font=("Helvetica", 15))],
         [sg.Button('OK', bind_return_key=True, font=("Helvetica", 15)), sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))],
@@ -144,7 +149,11 @@ while True: #? 無限ループ
     ret, frame = cap.read()
     
     # QRコードを検出
-    qr_data, _, _ = detector.detectAndDecode(frame)
+    try:
+        qr_data, _, _ = detector.detectAndDecode(frame)
+    except cv2.error as e:
+        print("QRコードの検出中にエラーが発生しました:", e)
+        qr_data = None
     
     # 読み取ったQRコードがあれば
     if qr_data and qr_data != last_qr_data:
@@ -152,7 +161,7 @@ while True: #? 無限ループ
         last_qr_data = qr_data
         capbool = True
         name = qr_data
-        print(name)
+        print(f"QRコードの中の数値: {qr_data}")
     
     # OpenCVのBGR形式をPySimpleGUIの画像形式に変換してウィンドウに表示
     if ret:
@@ -160,12 +169,13 @@ while True: #? 無限ループ
         imgbytes = cv2.imencode('.png', resized_frame)[1].tobytes()
         window['-IMAGE-'].update(data=imgbytes)
     
-    # メインループ内のウィンドウを閉じるイベントの処理部分
+    #? ウィンドウを閉じる時の処理
     if event == sg.WIN_CLOSED:
         messagebox.showinfo('警告', 'windowを閉じるのは「終了」ボタンから行ってください。')
         pass
     
-    if event == 'OK' or event == 'Escape:13' or capbool: #? OKが押されたときの処理
+    #? OKが押されたときの処理
+    if event == 'OK' or event == 'Escape:13' or capbool:
         capbool = False
         if not name:
             name = values["-NAME-"]
@@ -186,6 +196,7 @@ while True: #? 無限ループ
                 if temp_sheet.cell(row=row, column=1).value == name:
                     temp_sheet.cell(row=row, column=3, value='出席')
                     workbook.save(ar_filename)
+                    
                     information = f'{name}さんの出席処理は完了しました。'
                     window["-NAME-"].update("")  # 入力フィールドをクリア
                     conn.commit()  # 変更を確定
@@ -200,7 +211,8 @@ while True: #? 無限ループ
             messagebox.showinfo('失敗', f'{name} はデータベースに存在しません。')
             window["-NAME-"].update("")  # 入力フィールドをクリア
     
-    if event == '終了': #? 閉じられるときの処理
+    #? 閉じられるときの処理
+    if event == '終了':
         
         # カメラを解放
         cap.release()
@@ -227,7 +239,9 @@ while True: #? 無限ループ
                     dest_row = row - start_row + dest_start_row
                     dest_col = col - start_column + dest_start_column
                     dest_cell = sheet.cell(row=dest_row, column=dest_col)
+                    # セルの値をコピー
                     dest_cell.value = cell_value
+            
             
             workbook.save(ar_filename)
             
