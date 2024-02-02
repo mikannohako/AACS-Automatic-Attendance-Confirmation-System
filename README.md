@@ -9,4 +9,3 @@
 - pysqlite
 - openpyxl
 - opencv-python
-- simpleaudio　（予定）
