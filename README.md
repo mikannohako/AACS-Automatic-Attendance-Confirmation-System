@@ -3,8 +3,9 @@
 - Excelに出力する出席処理
 - 二次元コードでの出席処理
 - Excelの色付け
+- 出席率グラフの作成
 
-# 使用モジュール
+# 使用ライブラリ
 ## pipでのインストールが必要
 - PySimpleGUI
 - pysqlite
@@ -13,3 +14,7 @@
 ## python標準ライブラリ
 - sys
 - os
+- datetime
+- sqlite3
+- time
+- json
