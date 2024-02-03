@@ -46,7 +46,7 @@ current_date_h = current_date.strftime("%H")
 current_date_M = current_date.strftime("%M")
 current_date_s = current_date.strftime("%S")
 
-# 一時ファイル名
+# 記録ファイル名
 ar_filename = f"{current_date_y}Attendance records.xlsx"
 
 #? Excel初期設定
@@ -117,7 +117,7 @@ def mainwindowshow(): #? メインウィンドウ表示
     data = []
     
     for row in temp_sheet.iter_rows(values_only=True):
-        if row[2] == '欠席':  # 欠席のデータのみを抽出
+        if row[2] == '欠席':  # 欠席のデータのみを抽出 
             modified_row = list(row)
             modified_row[2] = '未出席'
             data.append(modified_row)
