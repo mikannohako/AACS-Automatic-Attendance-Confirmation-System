@@ -5,7 +5,11 @@
 - Excelの色付け
 
 # 使用モジュール
+## pipでのインストールが必要
 - PySimpleGUI
 - pysqlite
 - openpyxl
 - opencv-python
+## python標準ライブラリ
+- sys
+- os
