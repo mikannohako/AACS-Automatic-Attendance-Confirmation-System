@@ -8,8 +8,6 @@
 # 使用ライブラリ
 ## pipでのインストールが必要
 - PySimpleGUI
-- sqlite3
-- pysqlite3
 - openpyxl
 - opencv-python
 ## python標準ライブラリ
