@@ -20,4 +20,4 @@
 - json
 
 # VSCode使用拡張機能（VSCodeで実行する場合はいれてください。）
-- <https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments>
+- ("Better Comments" "https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments")
