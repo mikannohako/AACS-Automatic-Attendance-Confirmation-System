@@ -20,6 +20,7 @@ print("Color Change >>> ", end="")
 def exit_with_error(message):
     print(f"Error: {message}")
     messagebox.showerror("Error:", message)
+    subprocess.run(["python", "Menu.py"])
     sys.exit(1)  # アプリケーションをエラーコード 1 で終了します
 
 # 時間変数の設定

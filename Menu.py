@@ -47,7 +47,7 @@ while True:  #? 無限ループ
         subprocess.run(["python", "ExcelClean.py"])
         sys.exit(0)
     
-    if event == '初期起動':
+    if event == '-SYOKI-':
         window.close()
         subprocess.run(["python", "SpecialAttendance.py"])
         sys.exit(0)

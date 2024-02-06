@@ -14,6 +14,8 @@ import json
 import subprocess
 import winsound
 
+print("GA起動")
+
 #? config設定
 
 # 設定ファイルのパス
@@ -240,6 +242,7 @@ while True: #? 無限ループ
             workbook.save(ar_filename)
             
             messagebox.showinfo('完了', '記録終了は正常に終了しました。')
+            subprocess.run(["python", "Menu.py"])
             conn.close()
             break
         else:

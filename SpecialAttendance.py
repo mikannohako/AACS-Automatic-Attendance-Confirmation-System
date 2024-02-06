@@ -11,6 +11,8 @@ from openpyxl.worksheet.table import Table, TableStyleInfo
 import subprocess
 import sys
 
+print("初期処理 >>> ", end="")
+
 # 月ごとのシートを作成する関数
 def create_month_sheet(workbook, month):
     sheet_name = month
@@ -87,4 +89,7 @@ workbook.save(f"{current_date}Attendance records.xlsx")
 messagebox.showinfo('完了', '操作は正常に終了しました。')
 
 subprocess.run(["python", "Menu.py"])
+
+print("done")
+
 sys.exit(0)
