@@ -208,7 +208,7 @@ while True: #? 無限ループ
         
         
         
-        print('入力された値：', name)
+        print('名前：', name)
         if result:
             # 名前が一致する行を探し、出席を記録
             for row in range(1, temp_sheet.max_row + 1):
