@@ -19,5 +19,12 @@
 - time
 - json
 
-# VSCode使用拡張機能（VSCodeで実行する場合はいれてください。）
+# VSCode使用拡張機能
+## 必須
+- [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+- [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance)
+- [PySimpleGUI Snippets](https://marketplace.visualstudio.com/items?itemName=Acezx.pysimplegui-snippets)
+- [SQLite](https://marketplace.visualstudio.com/items?itemName=alexcvzz.vscode-sqlite)
+## あるとコードが見やすくなる
 - [Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments)
+- [indent-rainbow](https://marketplace.visualstudio.com/items?itemName=oderwat.indent-rainbow)
