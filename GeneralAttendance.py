@@ -99,13 +99,6 @@ workbook.save(ar_filename)
 
 information = '記録なし'
 
-#? 二次元コード
-# カメラを起動
-cap = cv2.VideoCapture(config_data["Camera_number"])
-
-# QRコードを検出するためのdetectorを作成
-detector = cv2.QRCodeDetector()
-
 # last_qr_dataの初期化
 last_qr_data = None
 
@@ -133,14 +126,9 @@ def mainwindowshow(): #? メインウィンドウ表示
         [sg.Table(values=data, headings=header, display_row_numbers=False, auto_size_columns=False, num_rows=min(20, len(data)))]
     ]
     
-    right_column = [
-        [sg.Image(filename='', key="-IMAGE-")],
-        [sg.Text('', key="-QR_DATA-")],
-    ]
-    
     # GUI画面のレイアウト
     layout = [
-        [sg.Column(left_column), sg.Column(right_column)]
+        [sg.Column(left_column)]
     ]
     
     window = sg.Window('出席処理', layout, finalize=True)
@@ -160,32 +148,7 @@ window = mainwindowshow()  # mainwindowshow()関数を呼び出して、window�
 
 while True: #? 無限ループ
     # イベントとデータの読み込み
-    event, values = window.read(timeout=20)
-    
-    # カメラからフレームを取得
-    ret, frame = cap.read()
-    
-    # QRコードを検出
-    try:
-        qr_data, _, _ = detector.detectAndDecode(frame)
-    except cv2.error as e:
-        print("QRコードの検出中にエラーが発生しました:", e)
-        qr_data = None
-    
-    # 読み取ったQRコードがあれば
-    if qr_data and qr_data != last_qr_data:
-        window['-QR_DATA-'].update(f'QRコードの中の数値: {qr_data}')
-        last_qr_data = qr_data
-        capbool = True
-        name = qr_data
-        winsound.Beep(1600, 200)
-        print(f"QRコードの中の数値: {qr_data}")
-    
-    # OpenCVのBGR形式をPySimpleGUIの画像形式に変換してウィンドウに表示
-    if ret:
-        resized_frame = cv2.resize(frame, (400, 300))
-        imgbytes = cv2.imencode('.png', resized_frame)[1].tobytes()
-        window['-IMAGE-'].update(data=imgbytes)
+    event, values = window.read()
     
     #? ウィンドウを閉じる時の処理
     if event == sg.WIN_CLOSED:
@@ -195,9 +158,9 @@ while True: #? 無限ループ
     
     #? OKが押されたときの処理
     if event == 'OK' or event == 'Escape:13' or capbool:
-        capbool = False
-        if not name:
-            name = values["-NAME-"]
+        name = values["-NAME-"]
+        
+        print("id: ", name)
         
         if name.isdigit():
             name = get_name_by_id(int(name))
@@ -232,9 +195,6 @@ while True: #? 無限ループ
     
     #? 閉じられるときの処理
     if event == '終了':
-        
-        # カメラを解放
-        cap.release()
         
         window.close()
         
