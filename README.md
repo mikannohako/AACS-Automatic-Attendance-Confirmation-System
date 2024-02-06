@@ -3,9 +3,28 @@
 - Excelに出力する出席処理
 - 二次元コードでの出席処理
 - Excelの色付け
+- 出席率グラフの作成　（予定）
 
-# 使用モジュール
+# 使用ライブラリ
+## pipでのインストールが必要
 - PySimpleGUI
 - pysqlite
 - openpyxl
 - opencv-python
+## python標準ライブラリ
+- sys
+- os
+- datetime
+- sqlite3
+- time
+- json
+
+# VSCode使用拡張機能
+## 必須
+- [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+- [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance)
+- [PySimpleGUI Snippets](https://marketplace.visualstudio.com/items?itemName=Acezx.pysimplegui-snippets)
+- [SQLite](https://marketplace.visualstudio.com/items?itemName=alexcvzz.vscode-sqlite)
+## あるとコードが見やすくなる
+- [Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments)
+- [indent-rainbow](https://marketplace.visualstudio.com/items?itemName=oderwat.indent-rainbow)

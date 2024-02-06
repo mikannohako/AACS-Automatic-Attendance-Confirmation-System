@@ -12,6 +12,7 @@ import cv2
 import time
 import json
 import subprocess
+import winsound
 
 #? config設定
 
@@ -45,7 +46,7 @@ current_date_h = current_date.strftime("%H")
 current_date_M = current_date.strftime("%M")
 current_date_s = current_date.strftime("%S")
 
-# 一時ファイル名
+# 記録ファイル名
 ar_filename = f"{current_date_y}Attendance records.xlsx"
 
 #? Excel初期設定
@@ -116,8 +117,10 @@ def mainwindowshow(): #? メインウィンドウ表示
     data = []
     
     for row in temp_sheet.iter_rows(values_only=True):
-        if row[2] == '欠席':  # 欠席のデータのみを抽出
-            data.append(list(row))  # タプルからリストに変換して追加
+        if row[2] == '欠席':  # 欠席のデータのみを抽出 
+            modified_row = list(row)
+            modified_row[2] = '未出席'
+            data.append(modified_row)
     
     # ヘッダーを取得
     header = list(temp_sheet.iter_rows(min_row=1, max_row=1, values_only=True))[0]
@@ -175,6 +178,7 @@ while True: #? 無限ループ
         last_qr_data = qr_data
         capbool = True
         name = qr_data
+        winsound.Beep(1600, 200)
         print(f"QRコードの中の数値: {qr_data}")
     
     # OpenCVのBGR形式をPySimpleGUIの画像形式に変換してウィンドウに表示
