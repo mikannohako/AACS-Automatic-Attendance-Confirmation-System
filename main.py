@@ -105,8 +105,6 @@ def SApy(): #? SpecialAttendance.py
     
     # エクセルファイルを保存
     workbook.save(f"{current_date_y}Attendance records.xlsx")
-    
-    messagebox.showinfo('完了', '操作は正常に終了しました。')
 
 def GApy(): #? GeneralAttendance.py & ExcelClean.py
     #? config設定
@@ -389,6 +387,9 @@ ar_filename = f"{current_date_y}Attendance records.xlsx"
 if not os.path.exists(ar_filename):
     # ファイルが存在しない場合の処理
     SApy()
+
+if not os.path.exists("Register.db"):
+    exit_with_error("名簿データが存在しません。")
 
 
 while True:  #? 無限ループ
