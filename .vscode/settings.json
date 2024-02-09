@@ -20,6 +20,8 @@
         "capbool",
         "ADFF2F",
         "event",
-        "SYOKI"
+        "SYOKI",
+        "pysqlite",
+        "Pylance"
     ]
 }
