@@ -12,19 +12,8 @@ from openpyxl.styles import PatternFill
 from openpyxl import load_workbook
 from openpyxl.worksheet.table import Table, TableStyleInfo
 import json
-import PySimpleGUI as sg
-import sys
-import os
-from datetime import datetime
-from tkinter import messagebox
-import sqlite3
-import openpyxl
-from openpyxl.styles import PatternFill
-from openpyxl import load_workbook
 import cv2
 import time
-import json
-import subprocess
 
 #? エラー時の処理の作成
 
@@ -116,11 +105,18 @@ def SApy(): #? SpecialAttendance.py
     
     # エクセルファイルを保存
     workbook.save(f"{current_date_y}Attendance records.xlsx")
-    
-    messagebox.showinfo('完了', '操作は正常に終了しました。')
 
 def GApy(): #? GeneralAttendance.py & ExcelClean.py
     #? config設定
+    
+    # 時間変数の設定
+    current_date = datetime.now()
+    current_date_y = current_date.strftime("%Y")
+    current_date_m = current_date.strftime("%m")
+    current_date_d = current_date.strftime("%d")
+    current_date_h = current_date.strftime("%H")
+    current_date_M = current_date.strftime("%M")
+    current_date_s = current_date.strftime("%S")
     
     # 設定ファイルのパス
     config_file_path = 'config.json'
@@ -178,10 +174,36 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
         temp_sheet.cell(row=row_number, column=1, value=data[0])  # 名前
         temp_sheet.cell(row=row_number, column=2, value=data[1])  # 学年
     
+    
+    start_row = 2
+    end_row = len(all_data) + 1
+    start_column = int(current_date_d) + 2
+    end_column = int(current_date_d) + 2
+    
+    # コピー先の開始セルの指定
+    dest_start_row = 2
+    dest_start_column = 3 # 文字列を整数値に変換
+    
+    
+    # 範囲をコピーしてコピー先のセルに貼り付ける
+    for row in range(start_row, end_row + 1):
+        for col in range(start_column, end_column + 1):
+            cell_value = sheet.cell(row=row, column=col).value
+            dest_row = row - start_row + dest_start_row
+            dest_col = col - start_column + dest_start_column
+            dest_cell = temp_sheet.cell(row=dest_row, column=dest_col)
+            # セルの値をコピー
+            dest_cell.value = cell_value
+    
+    
+    #? 欠席と入力
     end_row = len(all_data) + 1 # データの数に基づいて終了行を決定する
     for row_number in range(2, end_row + 1): # 2からend_row + 1までの行数を繰り返し処理
-        temp_sheet.cell(row=row_number, column=3, value='欠席') # 初めは欠席として設定
-    
+        # セルの値を取得
+        cell_value = temp_sheet.cell(row=row_number, column=3).value
+        # セルの値が空かどうかをチェック
+        if cell_value is None or cell_value == "":
+            temp_sheet.cell(row=row_number, column=3, value='無断欠席') # 初めは無断欠席として設定
     
     # 保存
     workbook.save(ar_filename)
@@ -199,13 +221,14 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
         data = []
         
         for row in temp_sheet.iter_rows(values_only=True):
-            if row[2] == '欠席':  # 欠席のデータのみを抽出 
+            if row[2] == '無断欠席':  # 無断欠席のデータのみを抽出 
                 modified_row = list(row)
                 modified_row[2] = '未出席'
                 data.append(modified_row)
         
         # ヘッダーを取得
         header = list(temp_sheet.iter_rows(min_row=1, max_row=1, values_only=True))[0]
+        
         
         left_column = [
             [sg.Text(information, font=("Helvetica", 40))],
@@ -328,14 +351,9 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
                 
                 workbook.save(ar_filename)
                 
+                
                 #? excelの色付け
                 print("Color Change >>> ", end="")
-                
-                #? エラー時の処理の作成
-                def exit_with_error(message):
-                    print(f"Error: {message}")
-                    messagebox.showerror("Error:", message)
-                    sys.exit(1)  # アプリケーションをエラーコード 1 で終了します
                 
                 # 時間変数の設定
                 current_date = datetime.now()
@@ -360,7 +378,7 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
                     for row in current_sheet.iter_rows():
                         for cell in row:
                             # セルの値が欠席か出席かを確認し、背景色を変更する
-                            if cell.value == '欠席':
+                            if cell.value == '無断欠席':
                                 cell.fill = absent_fill
                             elif cell.value == '出席':
                                 cell.fill = present_fill
@@ -370,21 +388,14 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
                 
                 print("done")
                 
-                messagebox.showinfo('完了', '正常に終了しました。')
-                
-                subprocess.run(["python", "Menu.py"])
-                sys.exit(0)
-                
                 messagebox.showinfo('完了', '記録終了は正常に終了しました。')
-                conn.close()
+                window.close()
                 break
             else:
                 # ウィンドウを閉じてから新しいウィンドウを作成
                 window.close()
                 window = mainwindowshow()
                 continue
-
-
 
 
 # GUI画面のレイアウト
@@ -394,7 +405,7 @@ layout = [
         sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))]
 ]
 
-menu = sg.Window('出席処理', layout, finalize=True)
+menu = sg.Window('MENU', layout, finalize=True, keep_on_top=True)
 
 # 記録ファイル名
 ar_filename = f"{current_date_y}Attendance records.xlsx"
@@ -417,4 +428,3 @@ while True:  #? 無限ループ
     if event == '通常出席':
         menu.close()
         GApy()
-        sys.exit(0)

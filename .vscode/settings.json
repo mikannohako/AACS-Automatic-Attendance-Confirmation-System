@@ -21,6 +21,11 @@
         "ADFF2F",
         "event",
         "SYOKI",
+<<<<<<< HEAD
         "AACS"
+=======
+        "pysqlite",
+        "Pylance"
+>>>>>>> 02f13e66decb158e41ace47e5813a2c2d44cc8e6
     ]
 }
