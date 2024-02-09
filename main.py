@@ -177,12 +177,12 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
     
     start_row = 2
     end_row = len(all_data) + 1
-    start_column = 3
-    end_column = 3
+    start_column = int(current_date_d) + 2
+    end_column = int(current_date_d) + 2
     
     # コピー先の開始セルの指定
     dest_start_row = 2
-    dest_start_column = int(current_date_d) + 2 # 文字列を整数値に変換
+    dest_start_column = 3 # 文字列を整数値に変換
     
     
     # 範囲をコピーしてコピー先のセルに貼り付ける
@@ -202,8 +202,8 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
         # セルの値を取得
         cell_value = temp_sheet.cell(row=row_number, column=3).value
         # セルの値が空かどうかをチェック
-        # if cell_value is None or cell_value == "":
-        temp_sheet.cell(row=row_number, column=3, value='無断欠席') # 初めは無断欠席として設定
+        if cell_value is None or cell_value == "":
+            temp_sheet.cell(row=row_number, column=3, value='無断欠席') # 初めは無断欠席として設定
     
     # 保存
     workbook.save(ar_filename)
