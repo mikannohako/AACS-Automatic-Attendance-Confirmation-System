@@ -403,7 +403,3 @@ while True:  #? 無限ループ
         menu.close()
         
         GApy()
-        messagebox.showinfo('インフォメーション', 'メニューが再度起動します。\nお待ちください。')
-        
-        python = sys.executable
-        os.execl(python, python, * sys.argv)
