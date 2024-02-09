@@ -404,6 +404,9 @@ if not os.path.exists(ar_filename):
     # ファイルが存在しない場合の処理
     SApy()
 
+if not os.path.exists("Register.db"):
+    exit_with_error("(File not found (Register.db)")
+
 while True:  #? 無限ループ
     event, values = menu.read()
     
