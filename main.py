@@ -287,10 +287,14 @@ def GApy(): #? 出席
             
             print('名前：', name)
             if result:
+                
+                current_date = datetime.now()
+                AttendanceTime = f"{current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                
                 # 名前が一致する行を探し、出席を記録
                 for row in range(1, temp_sheet.max_row + 1):
                     if temp_sheet.cell(row=row, column=1).value == name:
-                        temp_sheet.cell(row=row, column=3, value='出席')
+                        temp_sheet.cell(row=row, column=3, value=AttendanceTime)
                         workbook.save(ar_filename)
                         
                         information = f'{name}さんの出席処理は完了しました。'
