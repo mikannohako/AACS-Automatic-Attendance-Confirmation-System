@@ -33,7 +33,7 @@ current_date_s = current_date.strftime("%S")
 
 #? 各機能の関数
 
-def SApy(): #? SpecialAttendance.py
+def SApy(): #? 記録ファイル作成
     # 月ごとのシートを作成する関数
     def create_month_sheet(workbook, month):
         sheet_name = month
@@ -106,7 +106,7 @@ def SApy(): #? SpecialAttendance.py
     # エクセルファイルを保存
     workbook.save(f"{current_date_y}Attendance records.xlsx")
 
-def GApy(): #? GeneralAttendance.py & ExcelClean.py
+def GApy(): #? 出席
     #? config設定
     
     # 時間変数の設定
@@ -401,7 +401,10 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
 # GUI画面のレイアウト
 layout = [
     [sg.Text("起動する機能を選んでください。", font=("Helvetica", 15), justification='center')],  # カンマを追加
-    [sg.Button('通常出席', bind_return_key=True, font=("Helvetica", 15)),
+    [sg.Button('出席', bind_return_key=True, font=("Helvetica", 15)),
+        sg.Button('遅刻', bind_return_key=True, font=("Helvetica", 15)),
+        sg.Button('早退', bind_return_key=True, font=("Helvetica", 15)),
+        sg.Button('欠席', bind_return_key=True, font=("Helvetica", 15)),
         sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))]
 ]
 
@@ -425,6 +428,6 @@ while True:  #? 無限ループ
         menu.close()
         sys.exit(0)
     
-    if event == '通常出席':
+    if event == '出席':
         menu.close()
         GApy()
