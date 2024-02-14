@@ -30,6 +30,7 @@ current_date_d = current_date.strftime("%d")
 current_date_h = current_date.strftime("%H")
 current_date_M = current_date.strftime("%M")
 current_date_s = current_date.strftime("%S")
+current_date_A = current_date.strftime("%A")
 
 #? 各機能の関数
 
@@ -117,6 +118,7 @@ def GApy(): #? 出席
     current_date_h = current_date.strftime("%H")
     current_date_M = current_date.strftime("%M")
     current_date_s = current_date.strftime("%S")
+    current_date_A = current_date.strftime("%A")
     
     # 設定ファイルのパス
     config_file_path = 'config.json'
