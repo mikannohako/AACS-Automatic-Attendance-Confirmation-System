@@ -312,7 +312,7 @@ def GApy(): #? 出席
             if result:
                 
                 current_date = datetime.now()
-                if int(current_date.strftime('%H')) > lateness_time_hour and int(current_date.strftime('%M')) > lateness_time_minute:
+                if int(current_date.strftime('%H')) >= lateness_time_hour and int(current_date.strftime('%M')) > lateness_time_minute:
                     AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                 else:
                     AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
