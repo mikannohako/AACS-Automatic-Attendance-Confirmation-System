@@ -126,7 +126,7 @@ def GApy(): #? 出席
     # 設定ファイルの読み込み
     with open(config_file_path, 'r') as config_file:
         config_data = json.load(config_file)
-        
+    
     #? 変数の初期設定
     
     name_column_index = None
@@ -283,13 +283,18 @@ def GApy(): #? 出席
                 cursor.execute('SELECT GradeinSchool FROM Register WHERE Name = ?', (name,))
                 result = cursor.fetchone()
             
-            
+            # 遅刻の時間の定義
+            lateness_time_hour = 17
+            lateness_time_minute = 0
             
             print('名前：', name)
             if result:
                 
                 current_date = datetime.now()
-                AttendanceTime = f"{current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                if int(current_date.strftime('%H')) > lateness_time_hour and int(current_date.strftime('%M')) > lateness_time_minute:
+                    AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                else:
+                    AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                 
                 # 名前が一致する行を探し、出席を記録
                 for row in range(1, temp_sheet.max_row + 1):
@@ -374,8 +379,10 @@ def GApy(): #? 出席
                     exit_with_error("File not found")
                 
                 # 出席と欠席のセルの背景色を定義
-                absent_fill = PatternFill(start_color='FFC0CB', end_color='FFC0CB', fill_type='solid')  # 赤色
-                present_fill = PatternFill(start_color='ADFF2F', end_color='ADFF2F', fill_type='solid')  # 緑色
+                absence_fill = PatternFill(start_color=config_data['absence_colour'], end_color=config_data['absence_colour'], fill_type='solid')  # 欠席
+                attend_fill = PatternFill(start_color=config_data['attend_colour'], end_color=config_data['attend_colour'], fill_type='solid')  # 出席
+                lateness_fill = PatternFill(start_color=config_data['lateness_colour'], end_color=config_data['lateness_colour'], fill_type='solid') # 遅刻
+                
                 
                 for sheet in workbook.sheetnames:
                     current_sheet = workbook[sheet]
@@ -385,10 +392,11 @@ def GApy(): #? 出席
                         for cell in row:
                             # セルの値が欠席か出席かを確認し、背景色を変更する
                             if cell.value == '無断欠席':
-                                cell.fill = absent_fill
-                            elif cell.value == '出席':
-                                cell.fill = present_fill
-                                
+                                cell.fill = absence_fill
+                            elif isinstance(cell.value, str) and '出席' in cell.value:
+                                cell.fill = attend_fill
+                            elif isinstance(cell.value, str) and '遅刻' in cell.value:
+                                cell.fill = lateness_fill
                 # 変更を保存する
                 workbook.save(ar_filename)
                 

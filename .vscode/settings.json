@@ -1,31 +1,29 @@
 {
-    "cSpell.words": [
-        "openpyxl",
-        "Gradein",
-        "gradein",
-        "mainwindowshow",
-        "endresult",
-        "tabnine",
-        "monthlyname",
-        "sheetnames",
-        "zenhan",
-        "target_row",
-        "target_string",
-        "imshow",
-        "imgbytes",
-        "imencode",
-        "tobytes",
-        "kawidth",
-        "kaheight",
-        "capbool",
-        "ADFF2F",
-        "event",
-        "SYOKI",
-<<<<<<< HEAD
-        "AACS"
-=======
-        "pysqlite",
-        "Pylance"
->>>>>>> 02f13e66decb158e41ace47e5813a2c2d44cc8e6
-    ]
+        "cSpell.words": [
+                "openpyxl",
+                "Gradein",
+                "gradein",
+                "mainwindowshow",
+                "endresult",
+                "tabnine",
+                "monthlyname",
+                "sheetnames",
+                "zenhan",
+                "target_row",
+                "target_string",
+                "imshow",
+                "imgbytes",
+                "imencode",
+                "tobytes",
+                "kawidth",
+                "kaheight",
+                "capbool",
+                "ADFF2F",
+                "event",
+                "SYOKI",
+                "AACS",
+                "pysqlite",
+                "Pylance",
+                "colour"
+        ]
 }
