@@ -30,10 +30,12 @@ current_date_d = current_date.strftime("%d")
 current_date_h = current_date.strftime("%H")
 current_date_M = current_date.strftime("%M")
 current_date_s = current_date.strftime("%S")
+current_date_A = current_date.strftime("%A")
+
 
 #? 各機能の関数
 
-def SApy(): #? SpecialAttendance.py
+def SApy(): #? 記録ファイル作成
     # 月ごとのシートを作成する関数
     def create_month_sheet(workbook, month):
         sheet_name = month
@@ -106,7 +108,7 @@ def SApy(): #? SpecialAttendance.py
     # エクセルファイルを保存
     workbook.save(f"{current_date_y}Attendance records.xlsx")
 
-def GApy(): #? GeneralAttendance.py & ExcelClean.py
+def GApy(): #? 出席
     #? config設定
     
     # 時間変数の設定
@@ -117,6 +119,7 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
     current_date_h = current_date.strftime("%H")
     current_date_M = current_date.strftime("%M")
     current_date_s = current_date.strftime("%S")
+    current_date_A = current_date.strftime("%A")
     
     # 設定ファイルのパス
     config_file_path = 'config.json'
@@ -124,7 +127,7 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
     # 設定ファイルの読み込み
     with open(config_file_path, 'r') as config_file:
         config_data = json.load(config_file)
-        
+    
     #? 変数の初期設定
     
     name_column_index = None
@@ -133,6 +136,29 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
     
     # 記録ファイル名
     ar_filename = f"{current_date_y}Attendance records.xlsx"
+    
+    current_date = datetime.now()
+    
+    while True:
+        lateness_time_hour = sg.popup_get_text('遅刻に設定する時間（時）を入力してください。')
+        lateness_time_minute = sg.popup_get_text('遅刻に設定する時間（分）を入力してください。')
+        
+        # 文字列を整数に変換
+        try:
+            lateness_time_hour = int(lateness_time_hour)
+            lateness_time_minute = int(lateness_time_minute)
+        except ValueError:
+            messagebox.showwarning("警告", "入力された値が整数ではありません。整数値を入力してください。")
+            continue  
+        
+        if sg.popup_yes_no(f'{lateness_time_hour}時{lateness_time_minute}分以降を遅刻と設定しました。\nコレで設定しますか？'):
+            if lateness_time_hour <= current_date.hour:
+                if lateness_time_minute <= current_date.minute:
+                    break
+                else:
+                    messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
+            else:
+                messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
     
     #? Excel初期設定
     
@@ -282,13 +308,19 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
                 result = cursor.fetchone()
             
             
-            
             print('名前：', name)
             if result:
+                
+                current_date = datetime.now()
+                if int(current_date.strftime('%H')) > lateness_time_hour and int(current_date.strftime('%M')) > lateness_time_minute:
+                    AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                else:
+                    AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                
                 # 名前が一致する行を探し、出席を記録
                 for row in range(1, temp_sheet.max_row + 1):
                     if temp_sheet.cell(row=row, column=1).value == name:
-                        temp_sheet.cell(row=row, column=3, value='出席')
+                        temp_sheet.cell(row=row, column=3, value=AttendanceTime)
                         workbook.save(ar_filename)
                         
                         information = f'{name}さんの出席処理は完了しました。'
@@ -368,8 +400,10 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
                     exit_with_error("File not found")
                 
                 # 出席と欠席のセルの背景色を定義
-                absent_fill = PatternFill(start_color='FFC0CB', end_color='FFC0CB', fill_type='solid')  # 赤色
-                present_fill = PatternFill(start_color='ADFF2F', end_color='ADFF2F', fill_type='solid')  # 緑色
+                absence_fill = PatternFill(start_color=config_data['absence_colour'], end_color=config_data['absence_colour'], fill_type='solid')  # 欠席
+                attend_fill = PatternFill(start_color=config_data['attend_colour'], end_color=config_data['attend_colour'], fill_type='solid')  # 出席
+                lateness_fill = PatternFill(start_color=config_data['lateness_colour'], end_color=config_data['lateness_colour'], fill_type='solid') # 遅刻
+                
                 
                 for sheet in workbook.sheetnames:
                     current_sheet = workbook[sheet]
@@ -379,10 +413,11 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
                         for cell in row:
                             # セルの値が欠席か出席かを確認し、背景色を変更する
                             if cell.value == '無断欠席':
-                                cell.fill = absent_fill
-                            elif cell.value == '出席':
-                                cell.fill = present_fill
-                                
+                                cell.fill = absence_fill
+                            elif isinstance(cell.value, str) and '出席' in cell.value:
+                                cell.fill = attend_fill
+                            elif isinstance(cell.value, str) and '遅刻' in cell.value:
+                                cell.fill = lateness_fill
                 # 変更を保存する
                 workbook.save(ar_filename)
                 
@@ -401,7 +436,10 @@ def GApy(): #? GeneralAttendance.py & ExcelClean.py
 # GUI画面のレイアウト
 layout = [
     [sg.Text("起動する機能を選んでください。", font=("Helvetica", 15), justification='center')],  # カンマを追加
-    [sg.Button('通常出席', bind_return_key=True, font=("Helvetica", 15)),
+    [sg.Button('出席', bind_return_key=True, font=("Helvetica", 15)),
+        sg.Button('遅刻(実装未定)', bind_return_key=True, font=("Helvetica", 15)),
+        sg.Button('早退(実装未定)', bind_return_key=True, font=("Helvetica", 15)),
+        sg.Button('欠席(実装未定)', bind_return_key=True, font=("Helvetica", 15)),
         sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))]
 ]
 
@@ -425,6 +463,6 @@ while True:  #? 無限ループ
         menu.close()
         sys.exit(0)
     
-    if event == '通常出席':
+    if event == '出席':
         menu.close()
         GApy()

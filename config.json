@@ -1,3 +1,5 @@
 {
-    
+    "absence_colour": "FFC0CB",
+    "attend_colour": "ADFF2F",
+    "lateness_colour": "FFFF00"
 }
