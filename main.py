@@ -32,6 +32,7 @@ current_date_M = current_date.strftime("%M")
 current_date_s = current_date.strftime("%S")
 current_date_A = current_date.strftime("%A")
 
+
 #? 各機能の関数
 
 def SApy(): #? 記録ファイル作成
@@ -135,6 +136,29 @@ def GApy(): #? 出席
     
     # 記録ファイル名
     ar_filename = f"{current_date_y}Attendance records.xlsx"
+    
+    current_date = datetime.now()
+    
+    while True:
+        lateness_time_hour = sg.popup_get_text('遅刻に設定する時間（時）を入力してください。')
+        lateness_time_minute = sg.popup_get_text('遅刻に設定する時間（分）を入力してください。')
+        
+        # 文字列を整数に変換
+        try:
+            lateness_time_hour = int(lateness_time_hour)
+            lateness_time_minute = int(lateness_time_minute)
+        except ValueError:
+            messagebox.showwarning("警告", "入力された値が整数ではありません。整数値を入力してください。")
+            continue  
+        
+        if sg.popup_yes_no(f'{lateness_time_hour}時{lateness_time_minute}分以降を遅刻と設定しました。\nコレで設定しますか？'):
+            if lateness_time_hour <= current_date.hour:
+                if lateness_time_minute <= current_date.minute:
+                    break
+                else:
+                    messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
+            else:
+                messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
     
     #? Excel初期設定
     
@@ -283,9 +307,6 @@ def GApy(): #? 出席
                 cursor.execute('SELECT GradeinSchool FROM Register WHERE Name = ?', (name,))
                 result = cursor.fetchone()
             
-            # 遅刻の時間の定義
-            lateness_time_hour = 17
-            lateness_time_minute = 0
             
             print('名前：', name)
             if result:
@@ -416,9 +437,9 @@ def GApy(): #? 出席
 layout = [
     [sg.Text("起動する機能を選んでください。", font=("Helvetica", 15), justification='center')],  # カンマを追加
     [sg.Button('出席', bind_return_key=True, font=("Helvetica", 15)),
-        sg.Button('遅刻', bind_return_key=True, font=("Helvetica", 15)),
-        sg.Button('早退', bind_return_key=True, font=("Helvetica", 15)),
-        sg.Button('欠席', bind_return_key=True, font=("Helvetica", 15)),
+        sg.Button('遅刻(実装未定)', bind_return_key=True, font=("Helvetica", 15)),
+        sg.Button('早退(実装未定)', bind_return_key=True, font=("Helvetica", 15)),
+        sg.Button('欠席(実装未定)', bind_return_key=True, font=("Helvetica", 15)),
         sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))]
 ]
 
