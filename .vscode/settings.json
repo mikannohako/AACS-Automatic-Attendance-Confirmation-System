@@ -24,6 +24,8 @@
                 "AACS",
                 "pysqlite",
                 "Pylance",
-                "colour"
+                "colour",
+                "KESSEKI",
+                "SOUTAI"
         ]
 }
