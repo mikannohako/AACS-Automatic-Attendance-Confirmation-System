@@ -152,11 +152,8 @@ def GApy(): #? 出席
             continue  
         
         if sg.popup_yes_no(f'{lateness_time_hour}時{lateness_time_minute}分以降を遅刻と設定しました。\nコレで設定しますか？'):
-            if lateness_time_hour <= current_date.hour:
-                if lateness_time_minute <= current_date.minute:
-                    break
-                else:
-                    messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
+            if lateness_time_hour >= current_date.hour:
+                break
             else:
                 messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
     
@@ -260,7 +257,10 @@ def GApy(): #? 出席
             [sg.Text(information, font=("Helvetica", 40))],
             [sg.Text('苗字を入力してください。', key="-INPUT-", font=("Helvetica", 15))],
             [sg.InputText(key="-NAME-", font=("Helvetica", 15))],
-            [sg.Button('OK', bind_return_key=True, font=("Helvetica", 15)), sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))],
+            [sg.Button('OK', bind_return_key=True, font=("Helvetica", 15)),
+                sg.Button('終了', bind_return_key=True, font=("Helvetica", 15)),
+                sg.Checkbox('欠席', key='-KESSEKI-', enable_events=True),
+                sg.Checkbox('早退', key='-SOUTAI-', enable_events=True)],
             [sg.Table(values=data, headings=header, display_row_numbers=False, auto_size_columns=False, num_rows=min(20, len(data)))]
         ]
         
@@ -311,26 +311,53 @@ def GApy(): #? 出席
             print('名前：', name)
             if result:
                 
+                toggle_state = values['-KESSEKI-']
                 current_date = datetime.now()
                 if int(current_date.strftime('%H')) >= lateness_time_hour and int(current_date.strftime('%M')) > lateness_time_minute:
                     AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                elif toggle_state:
+                    AttendanceTime = f"欠席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                 else:
                     AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                 
-                # 名前が一致する行を探し、出席を記録
-                for row in range(1, temp_sheet.max_row + 1):
-                    if temp_sheet.cell(row=row, column=1).value == name:
-                        temp_sheet.cell(row=row, column=3, value=AttendanceTime)
-                        workbook.save(ar_filename)
-                        
-                        information = f'{name}さんの出席処理は完了しました。'
-                        window["-NAME-"].update("")  # 入力フィールドをクリア
-                        conn.commit()  # 変更を確定
-                        
-                        # ウィンドウを閉じてから新しいウィンドウを作成
-                        window.close()
-                        window = mainwindowshow()
-                        break
+                
+                if toggle_state:
+                    if messagebox.askyesno('INFO', f'欠席として{name}さんを記録しますか？'):
+                        # 名前が一致する行を探し、出席を記録
+                        for row in range(1, sheet.max_row + 1):
+                            if sheet.cell(row=row, column=1).value == name:
+                                sheet.cell(row=row, column=int(current_date_d) + 2, value=AttendanceTime)
+                                workbook.save(ar_filename)
+                                
+                                information = f'{name}さんの欠席処理は完了しました。'
+                                window["-NAME-"].update("")  # 入力フィールドをクリア
+                                conn.commit()  # 変更を確定
+                                
+                                # 背景色を設定
+                                cell = sheet.cell(row=row, column=int(current_date_d) + 2)
+                                cell.fill = PatternFill(start_color=config_data[''], end_color=config_data[''], fill_type='solid')  # 赤色
+                                
+                                # ウィンドウを閉じてから新しいウィンドウを作成
+                                window.close()
+                                window = mainwindowshow()
+                                
+                                break
+                    
+                else:
+                    # 名前が一致する行を探し、出席を記録
+                    for row in range(1, temp_sheet.max_row + 1):
+                        if temp_sheet.cell(row=row, column=1).value == name:
+                            temp_sheet.cell(row=row, column=3, value=AttendanceTime)
+                            workbook.save(ar_filename)
+                            
+                            information = f'{name}さんの出席処理は完了しました。'
+                            window["-NAME-"].update("")  # 入力フィールドをクリア
+                            conn.commit()  # 変更を確定
+                            
+                            # ウィンドウを閉じてから新しいウィンドウを作成
+                            window.close()
+                            window = mainwindowshow()
+                            break
             else:
                 # 失敗処理
                 print(f"{name} はデータベースに存在しません。")
