@@ -12,8 +12,6 @@ from openpyxl.styles import PatternFill
 from openpyxl import load_workbook
 from openpyxl.worksheet.table import Table, TableStyleInfo
 import json
-import cv2
-import time
 
 #? エラー時の処理の作成
 
@@ -143,6 +141,9 @@ def GApy(): #? 出席
         lateness_time_hour = sg.popup_get_text('遅刻に設定する時間（時）を入力してください。')
         lateness_time_minute = sg.popup_get_text('遅刻に設定する時間（分）を入力してください。')
         
+        if lateness_time_hour is None or lateness_time_minute is None:
+            sys.exit(0)
+        
         # 文字列を整数に変換
         try:
             lateness_time_hour = int(lateness_time_hour)
@@ -152,10 +153,13 @@ def GApy(): #? 出席
             continue  
         
         if sg.popup_yes_no(f'{lateness_time_hour}時{lateness_time_minute}分以降を遅刻と設定しました。\nコレで設定しますか？'):
-            if lateness_time_hour >= current_date.hour:
-                break
-            else:
+            if lateness_time_hour <= current_date.hour or lateness_time_hour >= 24:
                 messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
+            else:
+                if lateness_time_minute <= current_date.minute or lateness_time_minute >= 60:
+                    messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
+                else:
+                    break
     
     #? Excel初期設定
     
@@ -248,9 +252,10 @@ def GApy(): #? 出席
                 modified_row = list(row)
                 modified_row[2] = '未出席'
                 data.append(modified_row)
+            else:
+                data.append(list(row))
         
-        # ヘッダーを取得
-        header = list(temp_sheet.iter_rows(min_row=1, max_row=1, values_only=True))[0]
+        header = ['名前', '学年', '出席状況']  # 各列のヘッダーを指定
         
         
         left_column = [
@@ -259,8 +264,8 @@ def GApy(): #? 出席
             [sg.InputText(key="-NAME-", font=("Helvetica", 15))],
             [sg.Button('OK', bind_return_key=True, font=("Helvetica", 15)),
                 sg.Button('終了', bind_return_key=True, font=("Helvetica", 15)),
-                sg.Checkbox('欠席', key='-KESSEKI-', enable_events=True),
-                sg.Checkbox('早退', key='-SOUTAI-', enable_events=True)],
+                sg.Checkbox('欠席', key='-ABSENCE-', enable_events=True),
+                sg.Checkbox('早退', key='-LEAVE_EARLY-', enable_events=True)],
             [sg.Table(values=data, headings=header, display_row_numbers=False, auto_size_columns=False, num_rows=min(20, len(data)))]
         ]
         
@@ -311,31 +316,50 @@ def GApy(): #? 出席
             print('名前：', name)
             if result:
                 
-                toggle_state = values['-KESSEKI-']
+                absence_state = values['-ABSENCE-']
+                leave_early = values['-LEAVE_EARLY-']
+                
                 current_date = datetime.now()
                 if int(current_date.strftime('%H')) >= lateness_time_hour and int(current_date.strftime('%M')) > lateness_time_minute:
                     AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
-                elif toggle_state:
-                    AttendanceTime = f"欠席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                elif absence_state:
+                    AttendanceTime = "欠席"
+                elif leave_early:
+                    AttendanceTime = f"早退 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                 else:
                     AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                 
                 
-                if toggle_state:
+                if absence_state:
                     if messagebox.askyesno('INFO', f'欠席として{name}さんを記録しますか？'):
                         # 名前が一致する行を探し、出席を記録
-                        for row in range(1, sheet.max_row + 1):
-                            if sheet.cell(row=row, column=1).value == name:
-                                sheet.cell(row=row, column=int(current_date_d) + 2, value=AttendanceTime)
+                        for row in range(1, temp_sheet.max_row + 1):
+                            if temp_sheet.cell(row=row, column=1).value == name:
+                                temp_sheet.cell(row=row, column=3, value=AttendanceTime)
                                 workbook.save(ar_filename)
                                 
                                 information = f'{name}さんの欠席処理は完了しました。'
+                                
                                 window["-NAME-"].update("")  # 入力フィールドをクリア
                                 conn.commit()  # 変更を確定
                                 
-                                # 背景色を設定
-                                cell = sheet.cell(row=row, column=int(current_date_d) + 2)
-                                cell.fill = PatternFill(start_color=config_data[''], end_color=config_data[''], fill_type='solid')  # 赤色
+                                # ウィンドウを閉じてから新しいウィンドウを作成
+                                window.close()
+                                window = mainwindowshow()
+                                
+                                break
+                    
+                elif leave_early:
+                    if messagebox.askyesno('INFO', f'早退として{name}さんを記録しますか？'):
+                        # 名前が一致する行を探し、出席を記録
+                        for row in range(1, temp_sheet.max_row + 1):
+                            if temp_sheet.cell(row=row, column=1).value == name:
+                                temp_sheet.cell(row=row, column=3, value=AttendanceTime)
+                                workbook.save(ar_filename)
+                                
+                                information = f'{name}さんの早退処理は完了しました。'
+                                window["-NAME-"].update("")  # 入力フィールドをクリア
+                                conn.commit()  # 変更を確定
                                 
                                 # ウィンドウを閉じてから新しいウィンドウを作成
                                 window.close()
@@ -427,9 +451,11 @@ def GApy(): #? 出席
                     exit_with_error("File not found")
                 
                 # 出席と欠席のセルの背景色を定義
-                absence_fill = PatternFill(start_color=config_data['absence_colour'], end_color=config_data['absence_colour'], fill_type='solid')  # 欠席
+                truancy_fill = PatternFill(start_color=config_data['truancy_colour'], end_color=config_data['truancy_colour'], fill_type='solid')  # 無断欠席
                 attend_fill = PatternFill(start_color=config_data['attend_colour'], end_color=config_data['attend_colour'], fill_type='solid')  # 出席
                 lateness_fill = PatternFill(start_color=config_data['lateness_colour'], end_color=config_data['lateness_colour'], fill_type='solid') # 遅刻
+                absence_fill = PatternFill(start_color=config_data['absence_colour'], end_color=config_data['absence_colour'], fill_type='solid') # 欠席
+                leave_early_fill = PatternFill(start_color=config_data['leave_early_colour'], end_color=config_data['leave_early_colour'], fill_type='solid') #早退
                 
                 
                 for sheet in workbook.sheetnames:
@@ -440,11 +466,15 @@ def GApy(): #? 出席
                         for cell in row:
                             # セルの値が欠席か出席かを確認し、背景色を変更する
                             if cell.value == '無断欠席':
-                                cell.fill = absence_fill
+                                cell.fill = truancy_fill
                             elif isinstance(cell.value, str) and '出席' in cell.value:
                                 cell.fill = attend_fill
                             elif isinstance(cell.value, str) and '遅刻' in cell.value:
                                 cell.fill = lateness_fill
+                            elif isinstance(cell.value, str) and '欠席' in cell.value:
+                                cell.fill = absence_fill
+                            elif isinstance(cell.value, str) and '早退' in cell.value:
+                                cell.fill = leave_early_fill
                 # 変更を保存する
                 workbook.save(ar_filename)
                 
