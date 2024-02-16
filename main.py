@@ -153,10 +153,10 @@ def GApy(): #? 出席
             continue  
         
         if sg.popup_yes_no(f'{lateness_time_hour}時{lateness_time_minute}分以降を遅刻と設定しました。\nコレで設定しますか？'):
-            if lateness_time_hour <= current_date.hour or lateness_time_hour >= 24:
+            if lateness_time_hour < current_date.hour or lateness_time_hour >= 24:
                 messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
             else:
-                if lateness_time_minute <= current_date.minute or lateness_time_minute >= 60:
+                if lateness_time_minute < current_date.minute or lateness_time_minute >= 60:
                     messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
                 else:
                     break
