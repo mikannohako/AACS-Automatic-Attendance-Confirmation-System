@@ -436,10 +436,7 @@ def GApy(): #? 出席
 # GUI画面のレイアウト
 layout = [
     [sg.Text("起動する機能を選んでください。", font=("Helvetica", 15), justification='center')],  # カンマを追加
-    [sg.Button('出席', bind_return_key=True, font=("Helvetica", 15)),
-        sg.Button('遅刻(実装未定)', bind_return_key=True, font=("Helvetica", 15)),
-        sg.Button('早退(実装未定)', bind_return_key=True, font=("Helvetica", 15)),
-        sg.Button('欠席(実装未定)', bind_return_key=True, font=("Helvetica", 15)),
+    [sg.Button('記録', bind_return_key=True, font=("Helvetica", 15)),
         sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))]
 ]
 
@@ -463,6 +460,6 @@ while True:  #? 無限ループ
         menu.close()
         sys.exit(0)
     
-    if event == '出席':
+    if event == '記録':
         menu.close()
         GApy()
