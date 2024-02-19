@@ -45,7 +45,7 @@ ar_filename = f"{current_date_y}Attendance records.xlsx"
 
 #? 各機能の関数
 
-def SApy(): #? 記録ファイル作成
+def SApy(): # 記録ファイル作成
     # 月ごとのシートを作成する関数
     def create_month_sheet(workbook, month):
         sheet_name = month
@@ -118,7 +118,7 @@ def SApy(): #? 記録ファイル作成
     # エクセルファイルを保存
     workbook.save(f"{current_date_y}Attendance records.xlsx")
 
-def GApy(): #? 出席
+def GApy(): # 出席
     #? config設定
     
     # 時間変数の設定
@@ -151,10 +151,11 @@ def GApy(): #? 出席
     
     while True:
         lateness_time_hour = sg.popup_get_text('遅刻に設定する時間（時）を入力してください。')
+        if lateness_time_hour is None:
+            return
         lateness_time_minute = sg.popup_get_text('遅刻に設定する時間（分）を入力してください。')
-        
-        if lateness_time_hour is None or lateness_time_minute is None:
-            sys.exit(0)
+        if lateness_time_minute is None:
+            return
         
         # 文字列を整数に変換
         try:
@@ -164,7 +165,7 @@ def GApy(): #? 出席
             messagebox.showwarning("警告", "入力された値が整数ではありません。整数値を入力してください。")
             continue  
         
-        if sg.popup_yes_no(f'{lateness_time_hour}時{lateness_time_minute}分以降を遅刻と設定しました。\nコレで設定しますか？'):
+        if sg.popup_yes_no(f'{lateness_time_hour}時{lateness_time_minute}分以降を遅刻と設定しますか。'):
             if lateness_time_hour < current_date.hour or lateness_time_hour >= 24:
                 messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
             else:
@@ -172,6 +173,8 @@ def GApy(): #? 出席
                     messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
                 else:
                     break
+        else:
+            return
     
     #? Excel初期設定
     
@@ -315,8 +318,6 @@ def GApy(): #? 出席
         if event == 'OK' or event == 'Escape:13' or capbool:
             name = values["-NAME-"]
             
-            print("id: ", name)
-            
             if name.isdigit():
                 name = get_name_by_id(int(name))
                 result = name
@@ -331,9 +332,15 @@ def GApy(): #? 出席
                 absence_state = values['-ABSENCE-']
                 leave_early = values['-LEAVE_EARLY-']
                 
+                print(current_date.hour)
+                print(lateness_time_hour)
+                print(current_date.minute)
+                print(lateness_time_minute)
+                
                 current_date = datetime.now()
-                if int(current_date.strftime('%H')) >= lateness_time_hour and int(current_date.strftime('%M')) > lateness_time_minute:
+                if current_date.hour >= lateness_time_hour and current_date.minute > lateness_time_minute:
                     AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                    print("遅刻")
                 elif absence_state:
                     AttendanceTime = "欠席"
                 elif leave_early:
@@ -501,12 +508,21 @@ def GApy(): #? 出席
                 window = mainwindowshow()
                 continue
 
-def control_panel():
+def control_panel(): #管理画面
+    
+    def json_change(name, Contents):
+        config_data[name] = Contents
+        
+        with open('config.json', 'w') as config_file:
+            json.dump(config_data, config_file)
+    
     while True:
         layout = [
-            [sg.Text("管理画面")],
-            [sg.Button('パスワード変更', bind_return_key=True, font=("Helvetica", 15)),
-                sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))]
+            [
+                sg.Button('パスワード変更', bind_return_key=True, font=("Helvetica", 15)),
+                sg.Button('戻る', bind_return_key=True, font=("Helvetica", 15)),
+                sg.Button('データ削除', bind_return_key=True, font=("Helvetica", 15), button_color=('white', 'red'))
+            ]
         ]
         
         Window = sg.Window('管理画面', layout, finalize=True, keep_on_top=True)
@@ -516,26 +532,35 @@ def control_panel():
         if event == 'パスワード変更':
             Window.close()
             tk.Tk().withdraw()
-            user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
             
-            if config_data["passPhrase"] == user_pass:
-                new_pass = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください：')
+            new_pass = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください。')
+            
+            if isinstance(new_pass, int) or isinstance(new_pass, str):
                 
-                if isinstance(new_pass, int) or isinstance(new_pass, str):
-                    config_data['passPhrase'] = new_pass
-                    
-                    with open('config.json', 'w') as config_file:
-                        json.dump(config_data, config_file)
-                    
-                    messagebox.showinfo("INFO", "変更に成功しました")
-                else:
-                    messagebox.showerror("ERROR", "ディオニシンニシ")
-                Window.close()  # 新しいウィンドウが表示されるたびに古いウィンドウを閉じる
+                json_change('passPhrase', new_pass)
                 
+                messagebox.showinfo("INFO", "変更に成功しました")
             else:
                 messagebox.showerror("ERROR", "パスワードが違います。")
-                Window.close()  # 新しいウィンドウが表示されるたびに古いウィンドウを��じる
-        if event == '終了':
+            Window.close()  # 新しいウィンドウが表示されるたびに古いウィンドウを閉じる
+        
+        if event == 'データ削除':
+            Window.close()
+            
+            # Tkinterウィンドウを作成（非表示）
+            root = tk.Tk()
+            root.withdraw()
+            
+            if messagebox.askquestion('警告', 'データは完全に消去されます。\n本当に削除しますか？', icon='warning') == 'yes':
+                user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
+                if config_data["passPhrase"] == user_pass:
+                    try:
+                        os.remove(ar_filename)
+                        messagebox.showinfo("INFO", "削除に成功しました")
+                    except FileNotFoundError:
+                        exit_with_error("File not found")
+        
+        if event == '戻る':
             Window.close()
             break
 
