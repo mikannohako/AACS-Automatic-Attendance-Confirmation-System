@@ -33,6 +33,15 @@ current_date_M = current_date.strftime("%M")
 current_date_s = current_date.strftime("%S")
 current_date_A = current_date.strftime("%A")
 
+# 設定ファイルのパス
+config_file_path = 'config.json'
+
+# 設定ファイルの読み込み
+with open(config_file_path, 'r') as config_file:
+    config_data = json.load(config_file)
+
+# 記録ファイル名
+ar_filename = f"{current_date_y}Attendance records.xlsx"
 
 #? 各機能の関数
 
@@ -493,14 +502,15 @@ def GApy(): #? 出席
                 continue
 
 def control_panel():
-    layout = [
-        [sg.Text("管理画面")],
-        [sg.Button('パスワード変更', bind_return_key=True, font=("Helvetica", 15))]
-    ]
-    
-    Window = sg.Window('管理画面', layout, finalize=True, keep_on_top=True)
-    
     while True:
+        layout = [
+            [sg.Text("管理画面")],
+            [sg.Button('パスワード変更', bind_return_key=True, font=("Helvetica", 15)),
+                sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))]
+        ]
+        
+        Window = sg.Window('管理画面', layout, finalize=True, keep_on_top=True)
+        
         event, values = Window.read()
         
         if event == 'パスワード変更':
@@ -510,30 +520,24 @@ def control_panel():
             
             if config_data["passPhrase"] == user_pass:
                 new_pass = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください：')
-        
+                
+                if isinstance(new_pass, int) or isinstance(new_pass, str):
+                    config_data['passPhrase'] = new_pass
+                    
+                    with open('config.json', 'w') as config_file:
+                        json.dump(config_data, config_file)
+                    
+                    messagebox.showinfo("INFO", "変更に成功しました")
+                else:
+                    messagebox.showerror("ERROR", "ディオニシンニシ")
+                Window.close()  # 新しいウィンドウが表示されるたびに古いウィンドウを閉じる
+                
+            else:
+                messagebox.showerror("ERROR", "パスワードが違います。")
+                Window.close()  # 新しいウィンドウが表示されるたびに古いウィンドウを��じる
         if event == '終了':
             Window.close()
             break
-
-# GUI画面のレイアウト
-layout = [
-    [sg.Text("起動する機能を選んでください。", font=("Helvetica", 15), justification='center')],  # カンマを追加
-    [sg.Button('記録', bind_return_key=True, font=("Helvetica", 15)),
-        sg.Button('終了', bind_return_key=True, font=("Helvetica", 15)),
-        sg.Button('管理画面', bind_return_key=True, font=("Helvetica", 15))]
-]
-
-menu = sg.Window('MENU', layout, finalize=True, keep_on_top=True)
-
-# 設定ファイルのパス
-config_file_path = 'config.json'
-
-# 設定ファイルの読み込み
-with open(config_file_path, 'r') as config_file:
-    config_data = json.load(config_file)
-
-# 記録ファイル名
-ar_filename = f"{current_date_y}Attendance records.xlsx"
 
 # ファイルが存在するかチェック
 if not os.path.exists(ar_filename):
@@ -544,6 +548,16 @@ if not os.path.exists("Register.db"):
     exit_with_error("(File not found (Register.db)")
 
 while True:  #? 無限ループ
+    # GUI画面のレイアウト
+    layout = [
+        [sg.Text("起動する機能を選んでください。", font=("Helvetica", 15), justification='center')],  # カンマを追加
+        [sg.Button('記録', bind_return_key=True, font=("Helvetica", 15)),
+            sg.Button('終了', bind_return_key=True, font=("Helvetica", 15)),
+            sg.Button('管理画面', bind_return_key=True, font=("Helvetica", 15))]
+    ]
+    
+    menu = sg.Window('MENU', layout, finalize=True, keep_on_top=True)
+    
     event, values = menu.read()
     
     if event == sg.WIN_CLOSED or event == '終了':  # Xボタンが押されたか、'終了'ボタンが押された場合
@@ -561,3 +575,5 @@ while True:  #? 無限ループ
         
         if config_data["passPhrase"] == user_pass:
             control_panel()
+        else:
+            messagebox.showerror("ERROR", "パスワードが間違っています。")
