@@ -26,6 +26,7 @@
                 "Pylance",
                 "colour",
                 "KESSEKI",
-                "SOUTAI"
+                "SOUTAI",
+                "pkcs7"
         ]
 }

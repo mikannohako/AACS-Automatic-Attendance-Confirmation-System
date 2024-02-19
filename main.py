@@ -6,6 +6,9 @@ import os
 import subprocess
 from datetime import datetime
 from tkinter import messagebox
+from tkinter import simpledialog
+import tkinter as tk
+import tkinter.simpledialog as simpledialog
 import sqlite3
 import openpyxl
 from openpyxl.styles import PatternFill
@@ -489,15 +492,25 @@ def GApy(): #? 出席
                 window = mainwindowshow()
                 continue
 
+def control_panel():
+    messagebox.showinfo("info", "de")
 
 # GUI画面のレイアウト
 layout = [
     [sg.Text("起動する機能を選んでください。", font=("Helvetica", 15), justification='center')],  # カンマを追加
     [sg.Button('記録', bind_return_key=True, font=("Helvetica", 15)),
-        sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))]
+        sg.Button('終了', bind_return_key=True, font=("Helvetica", 15)),
+        sg.Button('管理画面', bind_return_key=True, font=("Helvetica", 15))]
 ]
 
 menu = sg.Window('MENU', layout, finalize=True, keep_on_top=True)
+
+# 設定ファイルのパス
+config_file_path = 'config.json'
+
+# 設定ファイルの読み込み
+with open(config_file_path, 'r') as config_file:
+    config_data = json.load(config_file)
 
 # 記録ファイル名
 ar_filename = f"{current_date_y}Attendance records.xlsx"
@@ -520,3 +533,11 @@ while True:  #? 無限ループ
     if event == '記録':
         menu.close()
         GApy()
+    
+    if event == '管理画面':
+        menu.close()
+        tk.Tk().withdraw()
+        user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください:')
+        
+        if config_data["passPhrase"] == user_pass:
+            control_panel()
