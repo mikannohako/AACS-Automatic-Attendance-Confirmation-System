@@ -493,7 +493,27 @@ def GApy(): #? 出席
                 continue
 
 def control_panel():
-    messagebox.showinfo("info", "de")
+    layout = [
+        [sg.Text("管理画面")],
+        [sg.Button('パスワード変更', bind_return_key=True, font=("Helvetica", 15))]
+    ]
+    
+    Window = sg.Window('管理画面', layout, finalize=True, keep_on_top=True)
+    
+    while True:
+        event, values = Window.read()
+        
+        if event == 'パスワード変更':
+            Window.close()
+            tk.Tk().withdraw()
+            user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
+            
+            if config_data["passPhrase"] == user_pass:
+                new_pass = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください：')
+        
+        if event == '終了':
+            Window.close()
+            break
 
 # GUI画面のレイアウト
 layout = [
@@ -537,7 +557,7 @@ while True:  #? 無限ループ
     if event == '管理画面':
         menu.close()
         tk.Tk().withdraw()
-        user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください:')
+        user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
         
         if config_data["passPhrase"] == user_pass:
             control_panel()
