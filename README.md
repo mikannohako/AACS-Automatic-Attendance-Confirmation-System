@@ -10,6 +10,7 @@
 - PySimpleGUI
 - openpyxl
 - opencv-python
+- cryptography
 ## python標準ライブラリ
 - sys
 - os
