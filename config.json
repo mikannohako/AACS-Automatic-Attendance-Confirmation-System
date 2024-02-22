@@ -7,5 +7,5 @@
     "absence_colour": "FFFF00", 
     "leave_early_colour": "FFFF00", 
     
-    "Late_setting_lower_limit": 10
+    "Lateness_time": 15
 }

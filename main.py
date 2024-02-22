@@ -144,33 +144,35 @@ def GApy(): # 出席
     
     #? 遅刻時間の設定
     while True:
-        lateness_time = sg.popup_get_text(f'何分後に遅刻にしますか？')
-        if lateness_time is None:
-            return
+        lateness_time_hour = sg.popup_get_text('何時に帰り学活が終わりましたか＿？')
+        
+        lateness_time_minute = sg.popup_get_text(f"{lateness_time_hour}時何分に帰り学活が終わりましたか？")
         
         # 文字列を整数に変換
         try:
-            lateness_time = int(lateness_time)
+            lateness_time_hour = int(lateness_time_hour)
+            lateness_time_minute = int(lateness_time_minute)
         except ValueError:
             messagebox.showwarning("警告", "入力された値が整数ではありません。整数値を入力してください。")
             continue  
         
+        if lateness_time_hour is None or lateness_time_hour >= 24:
+            messagebox.showwarning("警告", "正しい値を入力してください。")
+            return
         
-        if sg.popup_yes_no(f'{lateness_time}分後を遅刻と設定しますか。'):
-            current_date = datetime.now()
-            if not lateness_time < config_data['Late_setting_lower_limit']:
-                lateness_time_minute = current_date.minute + lateness_time
-                lateness_time_hour = current_date.hour
-                
-                if lateness_time_minute >= 60:
-                    lateness_time_minute = lateness_time_minute - 60
-                    lateness_time_hour = lateness_time_hour + 1
-                
-                messagebox.showinfo("INFO", f"{lateness_time_hour}時{lateness_time_minute}分以降を遅刻として設定しました。")
-                break
-            else:
-                messagebox.showwarning("警告", f"遅刻時間は{config_data['Late_setting_lower_limit']}分以上です。{config_data['Late_setting_lower_limit']}分未満を入力しないでください。")
-                continue
+        if lateness_time_minute is None or lateness_time_hour >= 60:
+            messagebox.showwarning("警告", "正しい値を入力してください。")
+            return
+        
+        if sg.popup_yes_no(f'帰り学活の終了時間は{lateness_time_hour}時{lateness_time_minute}分ですか？'):
+            lateness_time_minute = lateness_time_minute + config_data['Lateness_time']
+            
+            if lateness_time_minute >= 60:
+                lateness_time_minute = lateness_time_minute - 60
+                lateness_time_hour = lateness_time_hour + 1
+            
+            messagebox.showinfo("INFO", f"{lateness_time_hour}時{lateness_time_minute}分以降を遅刻として設定しました。")
+            break
         else:
             return
     
