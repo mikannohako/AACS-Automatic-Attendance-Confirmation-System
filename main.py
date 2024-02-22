@@ -320,7 +320,7 @@ def GApy(): # 出席
                 result = cursor.fetchone()
             
             
-            print('Name：', name)
+            print('Name:', name)
             if result:
                 
                 absence_state = values['-ABSENCE-']
