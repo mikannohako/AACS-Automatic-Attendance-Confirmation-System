@@ -149,30 +149,35 @@ def GApy(): # 出席
     
     current_date = datetime.now()
     
+    #? 遅刻時間の設定
     while True:
-        lateness_time_hour = sg.popup_get_text('遅刻に設定する時間（時）を入力してください。')
-        if lateness_time_hour is None:
-            return
-        lateness_time_minute = sg.popup_get_text('遅刻に設定する時間（分）を入力してください。')
-        if lateness_time_minute is None:
+        lateness_time = sg.popup_get_text(f'何分後に遅刻にしますか？')
+        if lateness_time is None:
             return
         
         # 文字列を整数に変換
         try:
-            lateness_time_hour = int(lateness_time_hour)
-            lateness_time_minute = int(lateness_time_minute)
+            lateness_time = int(lateness_time)
         except ValueError:
             messagebox.showwarning("警告", "入力された値が整数ではありません。整数値を入力してください。")
             continue  
         
-        if sg.popup_yes_no(f'{lateness_time_hour}時{lateness_time_minute}分以降を遅刻と設定しますか。'):
-            if lateness_time_hour < current_date.hour or lateness_time_hour >= 24:
-                messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
+        
+        if sg.popup_yes_no(f'{lateness_time}分後を遅刻と設定しますか。'):
+            current_date = datetime.now()
+            if not lateness_time < config_data['Late_setting_lower_limit']:
+                lateness_time_minute = current_date.minute + lateness_time
+                lateness_time_hour = current_date.hour
+                
+                if lateness_time_minute >= 60:
+                    lateness_time_minute = lateness_time_minute - 60
+                    lateness_time_hour = lateness_time_hour + 1
+                
+                messagebox.showinfo("INFO", f"{lateness_time_hour}時{lateness_time_minute}分以降を遅刻として設定しました。")
+                break
             else:
-                if lateness_time_minute < current_date.minute or lateness_time_minute >= 60:
-                    messagebox.showwarning("警告", "現在時刻より前の時刻を入力しないでください。")
-                else:
-                    break
+                messagebox.showwarning("警告", f"遅刻時間は{config_data['Late_setting_lower_limit']}分以上です。{config_data['Late_setting_lower_limit']}分未満を入力しないでください。")
+                continue
         else:
             return
     
@@ -182,8 +187,7 @@ def GApy(): # 出席
     try:
         workbook = load_workbook(ar_filename)
     except FileNotFoundError:
-        messagebox.showerror("Error: File not found", "記録用のファイルがありません。\n初期起動を行ってください。")
-        subprocess.run(["python", "Menu.py"])
+        messagebox.showerror("Error: File not found", "記録用のファイルがありません。\n再起動を行ってください。")
         sys.exit(0)
     
     # アクティブなシートを開く
@@ -447,9 +451,9 @@ def GApy(): # 出席
                 if sheet_name_to_delete in workbook.sheetnames:
                     sheet_to_delete = workbook[sheet_name_to_delete]
                     workbook.remove(sheet_to_delete)
-                    print(f"{sheet_name_to_delete} シートを削除しました。")
+                    print("Temporary sheet deletion >>> done")
                 else:
-                    print(f"{sheet_name_to_delete} シートは存在しません。")
+                    print("Temporary sheet deletion >>> undone")
                 
                 workbook.save(ar_filename)
                 
@@ -519,7 +523,6 @@ def control_panel(): #管理画面
     while True:
         layout = [
             [
-                sg.Button('パスワード変更', bind_return_key=True, font=("Helvetica", 15)),
                 sg.Button('戻る', bind_return_key=True, font=("Helvetica", 15)),
                 sg.Button('データ削除', bind_return_key=True, font=("Helvetica", 15), button_color=('white', 'red'))
             ]
@@ -528,21 +531,6 @@ def control_panel(): #管理画面
         Window = sg.Window('管理画面', layout, finalize=True, keep_on_top=True)
         
         event, values = Window.read()
-        
-        if event == 'パスワード変更':
-            Window.close()
-            tk.Tk().withdraw()
-            
-            new_pass = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください。')
-            
-            if isinstance(new_pass, int) or isinstance(new_pass, str):
-                
-                json_change('passPhrase', new_pass)
-                
-                messagebox.showinfo("INFO", "変更に成功しました")
-            else:
-                messagebox.showerror("ERROR", "パスワードが違います。")
-            Window.close()  # 新しいウィンドウが表示されるたびに古いウィンドウを閉じる
         
         if event == 'データ削除':
             Window.close()

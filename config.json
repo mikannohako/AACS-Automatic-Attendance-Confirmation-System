@@ -1,1 +1,11 @@
-{"truancy_colour": "FFC0CB", "attend_colour": "ADFF2F", "lateness_colour": "FFFF00", "absence_colour": "FFFF00", "leave_early_colour": "FFFF00", "passPhrase": "admin"}
+{
+    "passPhrase": "admin",
+    
+    "truancy_colour": "FFC0CB", 
+    "attend_colour": "ADFF2F", 
+    "lateness_colour": "FFFF00", 
+    "absence_colour": "FFFF00", 
+    "leave_early_colour": "FFFF00", 
+    
+    "Late_setting_lower_limit": 10
+}
