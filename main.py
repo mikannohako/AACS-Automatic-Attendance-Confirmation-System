@@ -329,24 +329,27 @@ def GApy(): # 出席
                 current_date = datetime.now()
                 if current_date.hour >= lateness_time_hour and current_date.minute > lateness_time_minute:
                     AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
-                    print("遅刻")
+                    info = "遅刻"
                 elif absence_state:
                     AttendanceTime = "欠席"
+                    info = "欠席"
                 elif leave_early:
                     AttendanceTime = f"早退 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                    info = "早退"
                 else:
                     AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                    info = "出席"
                 
                 
-                if absence_state:
-                    if messagebox.askyesno('INFO', f'欠席として{name}さんを記録しますか？'):
+                if absence_state or leave_early:
+                    if messagebox.askyesno('INFO', f'{info}として{name}さんを記録しますか？'):
                         # 名前が一致する行を探し、出席を記録
                         for row in range(1, temp_sheet.max_row + 1):
                             if temp_sheet.cell(row=row, column=1).value == name:
                                 temp_sheet.cell(row=row, column=3, value=AttendanceTime)
                                 workbook.save(ar_filename)
                                 
-                                information = f'{name}さんの欠席処理は完了しました。'
+                                information = f'{name}さんの{info}処理は完了しました。'
                                 
                                 window["-NAME-"].update("")  # 入力フィールドをクリア
                                 conn.commit()  # 変更を確定
@@ -357,23 +360,6 @@ def GApy(): # 出席
                                 
                                 break
                     
-                elif leave_early:
-                    if messagebox.askyesno('INFO', f'早退として{name}さんを記録しますか？'):
-                        # 名前が一致する行を探し、出席を記録
-                        for row in range(1, temp_sheet.max_row + 1):
-                            if temp_sheet.cell(row=row, column=1).value == name:
-                                temp_sheet.cell(row=row, column=3, value=AttendanceTime)
-                                workbook.save(ar_filename)
-                                
-                                information = f'{name}さんの早退処理は完了しました。'
-                                window["-NAME-"].update("")  # 入力フィールドをクリア
-                                conn.commit()  # 変更を確定
-                                
-                                # ウィンドウを閉じてから新しいウィンドウを作成
-                                window.close()
-                                window = mainwindowshow()
-                                
-                                break
                     
                 else:
                     # 名前が一致する行を探し、出席を記録
