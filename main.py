@@ -359,8 +359,6 @@ def GApy(): # 出席
                                 window = mainwindowshow()
                                 
                                 break
-                    
-                    
                 else:
                     # 名前が一致する行を探し、出席を記録
                     for row in range(1, temp_sheet.max_row + 1):
