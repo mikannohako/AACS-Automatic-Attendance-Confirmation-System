@@ -3,7 +3,6 @@
 import PySimpleGUI as sg
 import sys
 import os
-import subprocess
 from datetime import datetime
 from tkinter import messagebox
 from tkinter import simpledialog
@@ -111,9 +110,9 @@ def SApy(): # 記録ファイル作成
     if sheet_name_to_delete in workbook.sheetnames:
         sheet_to_delete = workbook[sheet_name_to_delete]
         workbook.remove(sheet_to_delete)
-        print("一時シート削除>>>正常終了")
+        print("Temporary sheet deletion >>> done")
     else:
-        print(f"{sheet_name_to_delete} シートは存在しません。")
+        print("Temporary sheet deletion >>> undone")
     
     # エクセルファイルを保存
     workbook.save(f"{current_date_y}Attendance records.xlsx")
@@ -126,10 +125,6 @@ def GApy(): # 出席
     current_date_y = current_date.strftime("%Y")
     current_date_m = current_date.strftime("%m")
     current_date_d = current_date.strftime("%d")
-    current_date_h = current_date.strftime("%H")
-    current_date_M = current_date.strftime("%M")
-    current_date_s = current_date.strftime("%S")
-    current_date_A = current_date.strftime("%A")
     
     # 設定ファイルのパス
     config_file_path = 'config.json'
@@ -140,8 +135,6 @@ def GApy(): # 出席
     
     #? 変数の初期設定
     
-    name_column_index = None
-    date_row_index = None
     name = None
     
     # 記録ファイル名
@@ -256,9 +249,6 @@ def GApy(): # 出席
     
     information = '記録なし'
     
-    # last_qr_dataの初期化
-    last_qr_data = None
-    
     capbool = False
     
     def mainwindowshow(): #? メインウィンドウ表示
@@ -330,16 +320,11 @@ def GApy(): # 出席
                 result = cursor.fetchone()
             
             
-            print('名前：', name)
+            print('Name：', name)
             if result:
                 
                 absence_state = values['-ABSENCE-']
                 leave_early = values['-LEAVE_EARLY-']
-                
-                print(current_date.hour)
-                print(lateness_time_hour)
-                print(current_date.minute)
-                print(lateness_time_minute)
                 
                 current_date = datetime.now()
                 if current_date.hour >= lateness_time_hour and current_date.minute > lateness_time_minute:
