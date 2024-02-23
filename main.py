@@ -145,8 +145,11 @@ def GApy(): # 出席
     #? 遅刻時間の設定
     while True:
         lateness_time_hour = sg.popup_get_text('何時に帰り学活が終わりましたか＿？')
-        
+        if lateness_time_hour == None:
+            return
         lateness_time_minute = sg.popup_get_text(f"{lateness_time_hour}時何分に帰り学活が終わりましたか？")
+        if lateness_time_minute == None:
+            return
         
         # 文字列を整数に変換
         try:
