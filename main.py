@@ -328,20 +328,23 @@ def GApy(): # 出席
                 absence_state = values['-ABSENCE-']
                 leave_early = values['-LEAVE_EARLY-']
                 
+                AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                info = "出席"
+                
                 current_date = datetime.now()
-                if current_date.hour >= lateness_time_hour and current_date.minute > lateness_time_minute:
-                    AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
-                    info = "遅刻"
+                if current_date.hour >= lateness_time_hour:
+                    if current_date.minute > lateness_time_minute:
+                        AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                        info = "遅刻"
+                    if current_date.hour + 1 >= lateness_time_hour:
+                        AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                        info = "遅刻"
                 elif absence_state:
                     AttendanceTime = "欠席"
                     info = "欠席"
                 elif leave_early:
                     AttendanceTime = f"早退 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                     info = "早退"
-                else:
-                    AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
-                    info = "出席"
-                
                 
                 if absence_state or leave_early:
                     if messagebox.askyesno('INFO', f'{info}として{name}さんを記録しますか？'):
@@ -358,7 +361,6 @@ def GApy(): # 出席
                                 
                                 # ウィンドウを閉じてから新しいウィンドウを作成
                                 window.close()
-                                window = mainwindowshow()
                                 
                                 break
                 else:
@@ -368,12 +370,27 @@ def GApy(): # 出席
                             temp_sheet.cell(row=row, column=3, value=AttendanceTime)
                             workbook.save(ar_filename)
                             
-                            information = f'{name}さんの出席処理は完了しました。'
+                            information = f'{name}さんの{info}処理は完了しました。'
                             window["-NAME-"].update("")  # 入力フィールドをクリア
                             conn.commit()  # 変更を確定
                             
                             # ウィンドウを閉じてから新しいウィンドウを作成
                             window.close()
+                            
+                            if info == "遅刻":
+                                reason = sg.popup_get_text('なんで遅刻したの？？？？')
+                                messagebox.showinfo('知らん', '知ったこっちゃない')
+                                
+                                # 遅刻シートが存在しない場合は作成する
+                                if "遅刻" not in workbook.sheetnames:
+                                    workbook.create_sheet("遅刻")
+                                # 遅刻シートをアクティブにする
+                                lateness_sheet = workbook["遅刻"]
+                                
+                                # 最後の行を取得
+                                last_row = lateness_sheet.max_row
+                                lateness_sheet.cell(row=last_row + 1, column=1, value=reason)
+                            
                             window = mainwindowshow()
                             break
             else:
