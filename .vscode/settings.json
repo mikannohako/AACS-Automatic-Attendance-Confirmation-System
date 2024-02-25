@@ -27,6 +27,7 @@
                 "colour",
                 "KESSEKI",
                 "SOUTAI",
-                "pkcs7"
+                "pkcs7",
+                "COUNTIF"
         ]
 }
