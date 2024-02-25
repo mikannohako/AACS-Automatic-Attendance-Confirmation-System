@@ -144,28 +144,32 @@ def GApy(): # 出席
     
     #? 遅刻時間の設定
     while True:
-        lateness_time_hour = sg.popup_get_text('何時に帰り学活が終わりましたか＿？')
-        if lateness_time_hour == None:
-            return
-        lateness_time_minute = sg.popup_get_text(f"{lateness_time_hour}時何分に帰り学活が終わりましたか？")
-        if lateness_time_minute == None:
+        lateness_time = sg.popup_get_text('何時に帰り学活が終わりましたか？\n（HH:MMの形式で入力してください）')
+        
+        if lateness_time == None:
             return
         
-        # 文字列を整数に変換
+        # 入力された時間を「:」で分割する
         try:
-            lateness_time_hour = int(lateness_time_hour)
-            lateness_time_minute = int(lateness_time_minute)
+            hours, minutes = lateness_time.split(':')
+        except ValueError:
+            messagebox.showwarning("警告", "入力された値が正しい形式ではありません。")
+            continue
+        
+        # 入力された時間を整数に変換する
+        try:
+            lateness_time_hour = int(hours)
+            lateness_time_minute = int(minutes)
         except ValueError:
             messagebox.showwarning("警告", "入力された値が整数ではありません。整数値を入力してください。")
-            continue  
+            continue
         
-        if lateness_time_hour is None or lateness_time_hour >= 24:
-            messagebox.showwarning("警告", "正しい値を入力してください。")
-            return
-        
-        if lateness_time_minute is None or lateness_time_hour >= 60:
-            messagebox.showwarning("警告", "正しい値を入力してください。")
-            return
+        # 入力された時間の確認
+        if lateness_time_hour < 0 or lateness_time_hour > 23 or lateness_time_minute < 0 or lateness_time_minute > 59:
+            messagebox.showwarning("警告", "無効な時間です。正しい形式で再度入力してください。")
+            continue
+        else:
+            print("入力された時間は {} 時間 {} 分です。".format(hours, minutes))
         
         if sg.popup_yes_no(f'帰り学活の終了時間は{lateness_time_hour}時{lateness_time_minute}分ですか？'):
             lateness_time_minute = lateness_time_minute + config_data['Lateness_time']
