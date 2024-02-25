@@ -59,10 +59,17 @@ def SApy(): # 記録ファイル作成
     def input_date_data(sheet, month):
         days_in_month = 30 if month in ["04", "06", "09", "11"] else 31 if month != "02" else 29  # 月ごとの日数
         for day in range(1, days_in_month + 1):
-            sheet.cell(row=1, column=day + 2).value = day
+            sheet.cell(row=1, column=day + 9).value = day
         # 学年の列を追加
         sheet.cell(row=1, column=1).value = '名前'
         sheet.cell(row=1, column=2).value = '学年'
+        sheet.cell(row=1, column=3).value = '出席率'
+        sheet.cell(row=1, column=4).value = '全日数'
+        sheet.cell(row=1, column=5).value = '出席'
+        sheet.cell(row=1, column=6).value = '欠席'
+        sheet.cell(row=1, column=7).value = '無断欠席'
+        sheet.cell(row=1, column=8).value = '遅刻'
+        sheet.cell(row=1, column=9).value = '早退'
     
     # 新しいWorkbook（エクセルファイル）を作成して、ファイル名を指定
     workbook = openpyxl.Workbook()
@@ -86,6 +93,13 @@ def SApy(): # 記録ファイル作成
             row_number = sheet.max_row + 1
             sheet.cell(row=row_number, column=1, value=data[0])  # 名前
             sheet.cell(row=row_number, column=2, value=data[1])  # 学年
+            sheet.cell(row=row_number, column=3).value = f'= (E{row_number} / D{row_number}) * 100'
+            sheet.cell(row=row_number, column=4).value = f'=COUNTIF(J{row_number}:BA{row_number}, "<>")'  # 全日数
+            sheet.cell(row=row_number, column=5).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*出席*")'  # 出席
+            sheet.cell(row=row_number, column=6).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*欠席*")'  # 欠席
+            sheet.cell(row=row_number, column=7).value = f'=COUNTIF(J{row_number}:BA{row_number}, "無断欠席")'  # 無断欠席
+            sheet.cell(row=row_number, column=8).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*遅刻*")'  # 遅刻
+            sheet.cell(row=row_number, column=9).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*早退*")'  # 早退
         
         end_row = len(all_data) + 1 # データの数に基づいて終了行を決定する
         table_range = f"A1:B{end_row}"  # 範囲を変数に格納する
@@ -225,8 +239,8 @@ def GApy(): # 出席
     
     start_row = 2
     end_row = len(all_data) + 1
-    start_column = int(current_date_d) + 2
-    end_column = int(current_date_d) + 2
+    start_column = int(current_date_d) + 9
+    end_column = int(current_date_d) + 9
     
     # コピー先の開始セルの指定
     dest_start_row = 2
@@ -314,8 +328,6 @@ def GApy(): # 出席
         #? ウィンドウを閉じる時の処理
         if event == sg.WIN_CLOSED:
             messagebox.showinfo('警告', 'windowを閉じるのは「終了」ボタンから行ってください。')
-            window.close()
-            window = mainwindowshow()
         
         #? OKが押されたときの処理
         if event == 'OK' or event == 'Escape:13' or capbool:
@@ -335,23 +347,23 @@ def GApy(): # 出席
                 absence_state = values['-ABSENCE-']
                 leave_early = values['-LEAVE_EARLY-']
                 
+                current_date = datetime.now()
+                
                 AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                 info = "出席"
                 
-                current_date = datetime.now()
-                if current_date.hour >= lateness_time_hour:
-                    if current_date.minute > lateness_time_minute:
-                        AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
-                        info = "遅刻"
-                    if current_date.hour + 1 >= lateness_time_hour:
-                        AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
-                        info = "遅刻"
+                if absence_state and leave_early:
+                    messagebox.showwarning('警告', '早退または欠席、一つを選択してください。')
+                    break
                 elif absence_state:
                     AttendanceTime = "欠席"
                     info = "欠席"
                 elif leave_early:
                     AttendanceTime = f"早退 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                     info = "早退"
+                elif current_date.hour > lateness_time_hour or (current_date.hour == lateness_time_hour and current_date.minute > lateness_time_minute):
+                    AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                    info = "遅刻"
                 
                 if absence_state or leave_early:
                     if messagebox.askyesno('INFO', f'{info}として{name}さんを記録しますか？'):
@@ -366,9 +378,8 @@ def GApy(): # 出席
                                 window["-NAME-"].update("")  # 入力フィールドをクリア
                                 conn.commit()  # 変更を確定
                                 
-                                # ウィンドウを閉じてから新しいウィンドウを作成
                                 window.close()
-                                
+                                window = mainwindowshow()
                                 break
                 else:
                     # 名前が一致する行を探し、出席を記録
@@ -380,9 +391,6 @@ def GApy(): # 出席
                             information = f'{name}さんの{info}処理は完了しました。'
                             window["-NAME-"].update("")  # 入力フィールドをクリア
                             conn.commit()  # 変更を確定
-                            
-                            # ウィンドウを閉じてから新しいウィンドウを作成
-                            window.close()
                             
                             if info == "遅刻":
                                 reason = sg.popup_get_text('なんで遅刻したの？？？？')
@@ -398,6 +406,8 @@ def GApy(): # 出席
                                 last_row = lateness_sheet.max_row
                                 lateness_sheet.cell(row=last_row + 1, column=1, value=reason)
                             
+                            
+                            window.close()
                             window = mainwindowshow()
                             break
             else:
@@ -405,6 +415,8 @@ def GApy(): # 出席
                 print(f"{name} はデータベースに存在しません。")
                 messagebox.showinfo('失敗', f'{name} はデータベースに存在しません。')
                 window["-NAME-"].update("")  # 入力フィールドをクリア
+                window.close()
+                window = mainwindowshow()
         
         #? 閉じられるときの処理
         if event == '終了':
@@ -422,7 +434,7 @@ def GApy(): # 出席
                 
                 # コピー先の開始セルの指定
                 dest_start_row = 2
-                dest_start_column = int(current_date_d) + 2 # 文字列を整数値に変換
+                dest_start_column = int(current_date_d) + 9 # 文字列を整数値に変換
                 
                 # 範囲をコピーしてコピー先のセルに貼り付ける
                 for row in range(start_row, end_row + 1):
@@ -468,6 +480,7 @@ def GApy(): # 出席
                 except FileNotFoundError:
                     exit_with_error("File not found")
                 
+                '''
                 # 出席と欠席のセルの背景色を定義
                 truancy_fill = PatternFill(start_color=config_data['truancy_colour'], end_color=config_data['truancy_colour'], fill_type='solid')  # 無断欠席
                 attend_fill = PatternFill(start_color=config_data['attend_colour'], end_color=config_data['attend_colour'], fill_type='solid')  # 出席
@@ -493,6 +506,8 @@ def GApy(): # 出席
                                 cell.fill = absence_fill
                             elif isinstance(cell.value, str) and '早退' in cell.value:
                                 cell.fill = leave_early_fill
+                '''
+                
                 # 変更を保存する
                 workbook.save(ar_filename)
                 
@@ -502,9 +517,6 @@ def GApy(): # 出席
                 window.close()
                 break
             else:
-                # ウィンドウを閉じてから新しいウィンドウを作成
-                window.close()
-                window = mainwindowshow()
                 continue
 
 def control_panel(): #管理画面
