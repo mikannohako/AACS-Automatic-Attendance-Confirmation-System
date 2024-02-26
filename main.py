@@ -325,9 +325,6 @@ def GApy(): # 出席
         # イベントとデータの読み込み
         event, values = window.read()
         
-        #? ウィンドウを閉じる時の処理
-        if event == sg.WIN_CLOSED:
-            messagebox.showinfo('警告', 'windowを閉じるのは「終了」ボタンから行ってください。')
         
         #? OKが押されたときの処理
         if event == 'OK' or event == 'Escape:13' or capbool:
@@ -397,10 +394,10 @@ def GApy(): # 出席
                                 messagebox.showinfo('知らん', '知ったこっちゃない')
                                 
                                 # 遅刻シートが存在しない場合は作成する
-                                if "遅刻" not in workbook.sheetnames:
-                                    workbook.create_sheet("遅刻")
+                                if "遅刻理由" not in workbook.sheetnames:
+                                    workbook.create_sheet("遅刻理由")
                                 # 遅刻シートをアクティブにする
-                                lateness_sheet = workbook["遅刻"]
+                                lateness_sheet = workbook["遅刻理由"]
                                 
                                 # 最後の行を取得
                                 last_row = lateness_sheet.max_row
@@ -419,7 +416,7 @@ def GApy(): # 出席
                 window = mainwindowshow()
         
         #? 閉じられるときの処理
-        if event == '終了':
+        if event == '終了' or event == sg.WIN_CLOSED:
             
             window.close()
             
