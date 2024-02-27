@@ -95,7 +95,7 @@ def SApy(): # 記録ファイル作成
             sheet.cell(row=row_number, column=2, value=data[1])  # 学年
             sheet.cell(row=row_number, column=3).value = f'= ( E{row_number} / D{row_number}) * 100'
             sheet.cell(row=row_number, column=4).value = f'=COUNTIF(J{row_number}:BA{row_number}, "<>")'  # 全日数
-            sheet.cell(row=row_number, column=5).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*出席*")'  # 出席
+            sheet.cell(row=row_number, column=5).value = f'=(COUNTIF(J{row_number}:BA{row_number}, "*出席*") + H{row_number} + I{row_number})'  # 出席
             sheet.cell(row=row_number, column=6).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*欠席*")'  # 欠席
             sheet.cell(row=row_number, column=7).value = f'=COUNTIF(J{row_number}:BA{row_number}, "無断欠席")'  # 無断欠席
             sheet.cell(row=row_number, column=8).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*遅刻*")'  # 遅刻
@@ -350,8 +350,7 @@ def GApy(): # 出席
                 info = "出席"
                 
                 if absence_state and leave_early:
-                    messagebox.showwarning('警告', '早退または欠席、一つを選択してください。')
-                    break
+                    info = "error"
                 elif absence_state:
                     AttendanceTime = "欠席"
                     info = "欠席"
@@ -362,7 +361,9 @@ def GApy(): # 出席
                     AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                     info = "遅刻"
                 
-                if absence_state or leave_early:
+                if info == "error":
+                    messagebox.showwarning('警告', '早退または欠席、一つを選択してください。')
+                elif absence_state or leave_early:
                     if messagebox.askyesno('INFO', f'{info}として{name}さんを記録しますか？'):
                         # 名前が一致する行を探し、出席を記録
                         for row in range(1, temp_sheet.max_row + 1):
@@ -518,16 +519,14 @@ def GApy(): # 出席
 
 def control_panel(): #管理画面
     
-    def json_change(name, Contents):
-        config_data[name] = Contents
-        
-        with open('config.json', 'w') as config_file:
-            json.dump(config_data, config_file)
+    def DB_Operations():
+        print("DB_Operations")
     
     while True:
         layout = [
             [
                 sg.Button('戻る', bind_return_key=True, font=("Helvetica", 15)),
+                sg.Button('DB変更', bind_return_key=True, font=("Helvetica", 15)),
                 sg.Button('データ削除', bind_return_key=True, font=("Helvetica", 15), button_color=('white', 'red'))
             ]
         ]
