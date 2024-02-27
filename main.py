@@ -93,7 +93,7 @@ def SApy(): # 記録ファイル作成
             row_number = sheet.max_row + 1
             sheet.cell(row=row_number, column=1, value=data[0])  # 名前
             sheet.cell(row=row_number, column=2, value=data[1])  # 学年
-            sheet.cell(row=row_number, column=3).value = f'= ( (E{row_number} + H{row_number} + I{row_number}) / D{row_number}) * 100'
+            sheet.cell(row=row_number, column=3).value = f'= ( E{row_number} / D{row_number}) * 100'
             sheet.cell(row=row_number, column=4).value = f'=COUNTIF(J{row_number}:BA{row_number}, "<>")'  # 全日数
             sheet.cell(row=row_number, column=5).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*出席*")'  # 出席
             sheet.cell(row=row_number, column=6).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*欠席*")'  # 欠席
