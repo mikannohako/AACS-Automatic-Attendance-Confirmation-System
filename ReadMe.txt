@@ -1,6 +1,6 @@
 ■　はじめに
 
-「AACS」は部活の出欠確認をサポートするソフトです。
+「AACS」は部活などの出欠確認をサポートするソフトです。
 
 「Register.db」に登録されている名前またはIDを入力することで自動的にExcelに出欠を記録できます。
 
@@ -35,7 +35,7 @@ URL: https://github.com/mikannohako/AACS-Automatic-attendance-confirmation-syste
 --------------------
 ■　アンインストール
 
-・「AACS.exe」、「Register.db」、「config.json」を削除してください。
+・レジストリなどの変更はないので関連ファイルを削除するだけでアンインストールできます。
 
 --------------------
 ■　使用方法
@@ -44,4 +44,5 @@ URL: https://github.com/mikannohako/AACS-Automatic-attendance-confirmation-syste
 2. メニュー画面が出るので使用する機能を選んでください
 
    （通常出席の場合）
-1. 左上の入力ボックスにデータベースに記録されている名前かIDを入力してください。
+1. 遅刻に設定する時刻を入力してください。
+2. 左上の入力ボックスにデータベースに記録されている名前かIDを入力してください。
