@@ -22,15 +22,10 @@ def exit_with_error(message):
     messagebox.showerror("Error:", message)
     sys.exit(1)  # アプリケーションをエラーコード 1 で終了します
 
+
 # 時間変数の設定
 current_date = datetime.now()
 current_date_y = current_date.strftime("%Y")
-current_date_m = current_date.strftime("%m")
-current_date_d = current_date.strftime("%d")
-current_date_h = current_date.strftime("%H")
-current_date_M = current_date.strftime("%M")
-current_date_s = current_date.strftime("%S")
-current_date_A = current_date.strftime("%A")
 
 # 設定ファイルのパス
 config_file_path = 'config.json'
