@@ -8,12 +8,24 @@ from tkinter import messagebox
 from tkinter import simpledialog
 import tkinter as tk
 import tkinter.simpledialog as simpledialog
+from tkinter import filedialog
 import sqlite3
 import openpyxl
-from openpyxl.styles import PatternFill
 from openpyxl import load_workbook
-from openpyxl.worksheet.table import Table, TableStyleInfo
+from openpyxl.worksheet.table import TableStyleInfo
 import json
+
+# Tkinterウィンドウを作成
+root = tk.Tk()
+# topmost指定(最前面)
+root.attributes('-topmost', True)
+root.withdraw()
+root.lift()
+root.focus_force()
+
+# ダイアログボックスを作成
+messagebox.showinfo("Info", "This is a message")
+
 
 #? エラー時の処理の作成
 
