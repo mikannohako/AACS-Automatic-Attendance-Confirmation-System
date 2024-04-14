@@ -121,6 +121,7 @@ def GApy(): #? 出席
     current_date = datetime.now()
     current_date_y = current_date.strftime("%Y")
     current_date_m = current_date.strftime("%m")
+    current_date_h = current_date.strftime("%h")
     current_date_d = current_date.strftime("%d")
     
     # 設定ファイルのパス
@@ -141,35 +142,10 @@ def GApy(): #? 出席
     
     #? 遅刻時間の設定
     while True:
-        lateness_time = simpledialog.askstring('入力してください。', '何時に帰り学活が終わりましたか？\n（HH:MMの形式で入力してください）')
         
-        if lateness_time == None:
-            return
-        
-        # 入力された時間を「:」で分割する
-        try:
-            hours, minutes = lateness_time.split(':')
-        except ValueError:
-            messagebox.showwarning("警告", "入力された値が正しい形式ではありません。")
-            continue
-        
-        # 入力された時間を整数に変換する
-        try:
-            lateness_time_hour = int(hours)
-            lateness_time_minute = int(minutes)
-        except ValueError:
-            messagebox.showwarning("警告", "入力された値が整数ではありません。整数値を入力してください。")
-            continue
-        
-        # 入力された時間の確認
-        if lateness_time_hour < 0 or lateness_time_hour > 23 or lateness_time_minute < 0 or lateness_time_minute > 59:
-            messagebox.showwarning("警告", "無効な時間です。正しい形式で再度入力してください。")
-            continue
-        else:
-            print("入力された時間は {} 時間 {} 分です。".format(hours, minutes))
-        
-        
-        if messagebox.askokcancel("確認", f'帰り学活の終了時間は{lateness_time_hour}時{lateness_time_minute}分ですか？'):
+        if config_data["AutomaticLateTimeSetting"]:
+            lateness_time_hour = current_date.hour
+            lateness_time_minute = current_date.minute
             lateness_time_minute = lateness_time_minute + config_data['Lateness_time']
             
             if lateness_time_minute >= 60:
@@ -178,8 +154,40 @@ def GApy(): #? 出席
             
             messagebox.showinfo("INFO", f"{lateness_time_hour}時{lateness_time_minute}分以降を遅刻として設定しました。")
             break
-        else:
-            return
+        elif config_data['ManualLateTimeSetting']:
+            lateness_time = simpledialog.askstring('入力してください。', '何時以降を遅刻と設定しますか？\n（HH:MMの形式で入力してください）')
+            
+            if lateness_time == None:
+                return
+            
+            # 入力された時間を「:」で分割する
+            try:
+                hours, minutes = lateness_time.split(':')
+            except ValueError:
+                messagebox.showwarning("警告", "入力された値が正しい形式ではありません。")
+                continue
+            
+            # 入力された時間を整数に変換する
+            try:
+                lateness_time_hour = int(hours)
+                lateness_time_minute = int(minutes)
+            except ValueError:
+                messagebox.showwarning("警告", "入力された値が整数ではありません。整数値を入力してください。")
+                continue
+            
+            # 入力された時間の確認
+            if lateness_time_hour < 0 or lateness_time_hour > 23 or lateness_time_minute < 0 or lateness_time_minute > 59:
+                messagebox.showwarning("警告", "無効な時間です。正しい形式で再度入力してください。")
+                continue
+            else:
+                print("入力された時間は {} 時間 {} 分です。".format(hours, minutes))
+            
+            
+            if messagebox.askokcancel("確認", f'{lateness_time_hour}時{lateness_time_minute}分から遅刻に設定しますか？'):
+                messagebox.showinfo("INFO", f"{lateness_time_hour}時{lateness_time_minute}分以降を遅刻として設定しました。")
+                break
+            else:
+                return
     
     #? Excel初期設定
     
@@ -374,7 +382,7 @@ def GApy(): #? 出席
                             window["-NAME-"].update("")  # 入力フィールドをクリア
                             conn.commit()  # 変更を確定
                             
-                            if info == "遅刻":
+                            if info == "遅刻" and config_data['LateAgitation']:
                                 reason = sg.popup_get_text('なんで遅刻したの？？？？')
                                 messagebox.showinfo('知らん', '知ったこっちゃない')
                                 
@@ -475,16 +483,6 @@ def GApy(): #? 出席
 
 def control_panel(): #? 管理画面
     
-    def Data_Delete(): # データ削除
-        if messagebox.askquestion('警告', 'データは完全に消去されます。\n本当に削除しますか？', icon='warning') == 'yes':
-            user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
-            if config_data["passPhrase"] == user_pass:
-                try:
-                    os.remove(ar_filename)
-                    messagebox.showinfo("INFO", "削除に成功しました")
-                except:
-                    exit_with_error("予期しないエラーが発生しました")
-    
     def DB_Operations(): # DB変更
         print("DB_Operations")
         messagebox.showinfo("INFO", "まだこの機能は実装されていません")
@@ -494,11 +492,20 @@ def control_panel(): #? 管理画面
         while True:
             
             Late_agitation = config_data['LateAgitation']
+            Automatic_late_time_setting = config_data['AutomaticLateTimeSetting']
+            Manual_late_time_setting = config_data['ManualLateTimeSetting']
+            Lateness_Time = config_data['Lateness_time']
             
             # レイアウトの定義
             layout = [
                 [sg.Text('変更したい設定だけ変更してください。')],
-                [sg.Checkbox('遅刻時の煽り', default=Late_agitation, key='-LATEAGITATION-', enable_events=True)],
+                [sg.Text('遅刻時の煽り')],
+                [sg.Checkbox('遅刻時の煽り', default=Late_agitation, key='-LateAgitation-', enable_events=True),],
+                [
+                    sg.Checkbox('起動時の時間 + X 分後に自動的に決める。', default=Automatic_late_time_setting, key='-AutomaticLateTimeSetting-', enable_events=True),
+                    sg.Checkbox('時間を手動で入力する。', default=Manual_late_time_setting, key='-ManualLateTimeSetting-', enable_events=True)
+                ],
+                [sg.Text('自動設定の場合のを決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey')],
                 [sg.Button('終了')]
             ]
             
@@ -511,21 +518,63 @@ def control_panel(): #? 管理画面
                 
                 Late_agitation = config_data['LateAgitation']
                 
-                if event == sg.WINDOW_CLOSED or event == '終了':
+                if event == sg.WINDOW_CLOSED or event == '終了': # 終了
                     window.close()
+                    config_data["Lateness_time"] = values['-LatenessTime-']
                     
                     json_save()
                     
                     return
                 
-                elif event == '-LATEAGITATION-':
-                    Late_agitation = values['-LATEAGITATION-']
-                    if Late_agitation:
+                if event == '-LateAgitation-': # 遅刻時の煽り
+                    if values['-Late_agitation-']:
                         print("遅刻時の煽りがオンになりました")
                         config_data["LateAgitation"] = True
                     else:
                         print("遅刻時の煽りがオフになりました")
                         config_data["LateAgitation"] = False
+                
+                if event == '-AutomaticLateTimeSetting-':
+                    if values['-AutomaticLateTimeSetting-']:
+                        window['-ManualLateTimeSetting-'].update(False)
+                        
+                        # 入力ボックス有効化
+                        window['-LatenessTime-'].update(disabled=False)
+                        
+                        # config変更
+                        config_data["AutomaticLateTimeSetting"] = True
+                        config_data["ManualLateTimeSetting"] = False
+                    
+                elif event == '-ManualLateTimeSetting-':
+                    if values['-ManualLateTimeSetting-']:
+                        window['-AutomaticLateTimeSetting-'].update(False)
+                        
+                        # 入力ボックス無効化
+                        window['-LatenessTime-'].update(disabled=True)
+                        
+                        # config変更
+                        config_data["AutomaticLateTimeSetting"] = False
+                        config_data["ManualLateTimeSetting"] = True
+
+    
+    def password_change(): # パスワード変更
+        password = simpledialog.askstring("パスワード入力", "パスワードを入力してください")
+        
+        if password == config_data['passPhrase']:
+            messagebox.showinfo("成功", "パスワードの認証に成功しました。")
+            new_passphrase = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください。')
+            new_passphrase_1 = simpledialog.askstring("再入力", "パスワードをもう一度入力してください。")
+            if new_passphrase_1 == new_passphrase:
+                try:
+                    config_data["passPhrase"] = new_passphrase
+                    json_save()
+                    messagebox.showinfo("成功", "パスワードの変更に成功しました。")
+                except:
+                    messagebox.showinfo("失敗", "パスワードの変更に失敗しました。\nconfig.jsonファイルが他のプロセスに使用されている場合があります。")
+            else:
+                messagebox.showinfo("失敗", "パスワードの再入力に失敗しました。")
+        else:
+            messagebox.showinfo("失敗", "パスワードの認証に失敗しました。")
     
     #? 管理画面
     
@@ -534,8 +583,8 @@ def control_panel(): #? 管理画面
             [
                 sg.Button('戻る', bind_return_key=True, font=("Helvetica", 15)),
                 sg.Button('DB変更', bind_return_key=True, font=("Helvetica", 15)),
-                sg.Button('データ削除', bind_return_key=True, font=("Helvetica", 15), button_color=('white', 'red')),
-                sg.Button('設定', bind_return_key=True, font=('Helvetica', 15))
+                sg.Button('設定', bind_return_key=True, font=('Helvetica', 15)),
+                sg.Button('パスワード変更', bind_return_key=True, font=('Helvetica', 15))
             ]
         ]
         
@@ -546,18 +595,17 @@ def control_panel(): #? 管理画面
         if event == 'DB変更':
             Window.close()
             DB_Operations()
-            
-        if event == 'データ削除':
-            Window.close()
-            Data_Delete()
         
-        if event == '設定':
+        elif event == '設定':
             Window.close()
             setting()
         
-        if event == '戻る':
+        elif event == 'パスワード変更':
             Window.close()
-            
+            password_change()
+        
+        elif event == sg.WINDOW_CLOSED or event == '戻る':
+            Window.close()
             break
 
 #? 起動

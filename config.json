@@ -1,6 +1,8 @@
 {
-    "passPhrase": "admin",
-    "Lateness_time": 15,
+    "passPhrase": "1111",
+    "Lateness_time": "15",
     "test": "1324",
-    "LateAgitation": false
+    "LateAgitation": false,
+    "AutomaticLateTimeSetting": true,
+    "ManualLateTimeSetting": false
 }
