@@ -28,6 +28,8 @@
                 "KESSEKI",
                 "SOUTAI",
                 "pkcs7",
-                "COUNTIF"
+                "COUNTIF",
+                "askboolean",
+                "LATEAGITATION"
         ]
 }

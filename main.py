@@ -15,43 +15,19 @@ from openpyxl import load_workbook
 from openpyxl.worksheet.table import TableStyleInfo
 import json
 
-# Tkinterウィンドウを作成
-root = tk.Tk()
-# topmost指定(最前面)
-root.attributes('-topmost', True)
-root.withdraw()
-root.lift()
-root.focus_force()
-
-# ダイアログボックスを作成
-messagebox.showinfo("Info", "This is a message")
-
-
-#? エラー時の処理の作成
-
-def exit_with_error(message):
-    print(f"Error: {message}")
-    messagebox.showerror("Error:", message)
-    sys.exit(1)  # アプリケーションをエラーコード 1 で終了します
-
-
-# 時間変数の設定
-current_date = datetime.now()
-current_date_y = current_date.strftime("%Y")
-
-# 設定ファイルのパス
-config_file_path = 'config.json'
-
-# 設定ファイルの読み込み
-with open(config_file_path, 'r') as config_file:
-    config_data = json.load(config_file)
-
-# 記録ファイル名
-ar_filename = f"{current_date_y}Attendance records.xlsx"
-
 #? 各機能の関数
 
-def SApy(): # 記録ファイル作成
+def exit_with_error(message): #? エラー時の処理
+    print(f"Error: {message}")
+    messagebox.showerror("Error", message)
+    sys.exit(1)  # アプリケーションをエラーコード 1 で終了します
+
+def json_save(): #? JSONデータを保存
+    #
+    with open('config.json', 'w') as f:
+        json.dump(config_data, f, indent=4)
+
+def SApy(): #? 記録ファイル作成
     # 月ごとのシートを作成する関数
     def create_month_sheet(workbook, month):
         sheet_name = month
@@ -138,7 +114,7 @@ def SApy(): # 記録ファイル作成
     # エクセルファイルを保存
     workbook.save(f"{current_date_y}Attendance records.xlsx")
 
-def GApy(): # 出席
+def GApy(): #? 出席
     #? config設定
     
     # 時間変数の設定
@@ -165,7 +141,7 @@ def GApy(): # 出席
     
     #? 遅刻時間の設定
     while True:
-        lateness_time = sg.popup_get_text('何時に帰り学活が終わりましたか？\n（HH:MMの形式で入力してください）')
+        lateness_time = simpledialog.askstring('入力してください。', '何時に帰り学活が終わりましたか？\n（HH:MMの形式で入力してください）')
         
         if lateness_time == None:
             return
@@ -192,7 +168,8 @@ def GApy(): # 出席
         else:
             print("入力された時間は {} 時間 {} 分です。".format(hours, minutes))
         
-        if sg.popup_yes_no(f'帰り学活の終了時間は{lateness_time_hour}時{lateness_time_minute}分ですか？'):
+        
+        if messagebox.askokcancel("確認", f'帰り学活の終了時間は{lateness_time_hour}時{lateness_time_minute}分ですか？'):
             lateness_time_minute = lateness_time_minute + config_data['Lateness_time']
             
             if lateness_time_minute >= 60:
@@ -485,34 +462,6 @@ def GApy(): # 出席
                 except FileNotFoundError:
                     exit_with_error("File not found")
                 
-                '''
-                # 出席と欠席のセルの背景色を定義
-                truancy_fill = PatternFill(start_color=config_data['truancy_colour'], end_color=config_data['truancy_colour'], fill_type='solid')  # 無断欠席
-                attend_fill = PatternFill(start_color=config_data['attend_colour'], end_color=config_data['attend_colour'], fill_type='solid')  # 出席
-                lateness_fill = PatternFill(start_color=config_data['lateness_colour'], end_color=config_data['lateness_colour'], fill_type='solid') # 遅刻
-                absence_fill = PatternFill(start_color=config_data['absence_colour'], end_color=config_data['absence_colour'], fill_type='solid') # 欠席
-                leave_early_fill = PatternFill(start_color=config_data['leave_early_colour'], end_color=config_data['leave_early_colour'], fill_type='solid') #早退
-                
-                
-                for sheet in workbook.sheetnames:
-                    current_sheet = workbook[sheet]
-                    
-                    # すべてのセルを調べる
-                    for row in current_sheet.iter_rows():
-                        for cell in row:
-                            # セルの値が欠席か出席かを確認し、背景色を変更する
-                            if cell.value == '無断欠席':
-                                cell.fill = truancy_fill
-                            elif isinstance(cell.value, str) and '出席' in cell.value:
-                                cell.fill = attend_fill
-                            elif isinstance(cell.value, str) and '遅刻' in cell.value:
-                                cell.fill = lateness_fill
-                            elif isinstance(cell.value, str) and '欠席' in cell.value:
-                                cell.fill = absence_fill
-                            elif isinstance(cell.value, str) and '早退' in cell.value:
-                                cell.fill = leave_early_fill
-                '''
-                
                 # 変更を保存する
                 workbook.save(ar_filename)
                 
@@ -524,17 +473,69 @@ def GApy(): # 出席
             else:
                 continue
 
-def control_panel(): #管理画面
+def control_panel(): #? 管理画面
     
-    def DB_Operations():
+    def Data_Delete(): # データ削除
+        if messagebox.askquestion('警告', 'データは完全に消去されます。\n本当に削除しますか？', icon='warning') == 'yes':
+            user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
+            if config_data["passPhrase"] == user_pass:
+                try:
+                    os.remove(ar_filename)
+                    messagebox.showinfo("INFO", "削除に成功しました")
+                except:
+                    exit_with_error("予期しないエラーが発生しました")
+    
+    def DB_Operations(): # DB変更
         print("DB_Operations")
+        messagebox.showinfo("INFO", "まだこの機能は実装されていません")
+    
+    def setting(): # 設定変更画面
+        
+        while True:
+            
+            Late_agitation = config_data['LateAgitation']
+            
+            # レイアウトの定義
+            layout = [
+                [sg.Text('変更したい設定だけ変更してください。')],
+                [sg.Checkbox('遅刻時の煽り', default=Late_agitation, key='-LATEAGITATION-', enable_events=True)],
+                [sg.Button('終了')]
+            ]
+            
+            # ウィンドウの生成
+            window = sg.Window('設定', layout)
+            
+            # イベントループ
+            while True:
+                event, values = window.read()
+                
+                Late_agitation = config_data['LateAgitation']
+                
+                if event == sg.WINDOW_CLOSED or event == '終了':
+                    window.close()
+                    
+                    json_save()
+                    
+                    return
+                
+                elif event == '-LATEAGITATION-':
+                    Late_agitation = values['-LATEAGITATION-']
+                    if Late_agitation:
+                        print("遅刻時の煽りがオンになりました")
+                        config_data["LateAgitation"] = True
+                    else:
+                        print("遅刻時の煽りがオフになりました")
+                        config_data["LateAgitation"] = False
+    
+    #? 管理画面
     
     while True:
         layout = [
             [
                 sg.Button('戻る', bind_return_key=True, font=("Helvetica", 15)),
                 sg.Button('DB変更', bind_return_key=True, font=("Helvetica", 15)),
-                sg.Button('データ削除', bind_return_key=True, font=("Helvetica", 15), button_color=('white', 'red'))
+                sg.Button('データ削除', bind_return_key=True, font=("Helvetica", 15), button_color=('white', 'red')),
+                sg.Button('設定', bind_return_key=True, font=('Helvetica', 15))
             ]
         ]
         
@@ -542,33 +543,64 @@ def control_panel(): #管理画面
         
         event, values = Window.read()
         
+        if event == 'DB変更':
+            Window.close()
+            DB_Operations()
+            
         if event == 'データ削除':
             Window.close()
-            
-            # Tkinterウィンドウを作成（非表示）
-            root = tk.Tk()
-            root.withdraw()
-            
-            if messagebox.askquestion('警告', 'データは完全に消去されます。\n本当に削除しますか？', icon='warning') == 'yes':
-                user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
-                if config_data["passPhrase"] == user_pass:
-                    try:
-                        os.remove(ar_filename)
-                        messagebox.showinfo("INFO", "削除に成功しました")
-                    except FileNotFoundError:
-                        exit_with_error("File not found")
+            Data_Delete()
+        
+        if event == '設定':
+            Window.close()
+            setting()
         
         if event == '戻る':
             Window.close()
+            
             break
+
+#? 起動
+
+#? 初期設定
+
+# Tkinterウィンドウを作成
+root = tk.Tk()
+# topmost指定(最前面)
+root.attributes('-topmost', True)
+root.withdraw()
+root.lift()
+root.focus_force()
+
+#? ファイルの存在確認
+if not os.path.exists("config.json"):
+    exit_with_error("config.json file not found.")
+
+if not os.path.exists("Register.db"):
+    exit_with_error("Register.db file not found.")
+
+# 時間変数の設定
+current_date = datetime.now()
+current_date_y = current_date.strftime("%Y")
+
+# 設定ファイルのパス
+config_file_path = 'config.json'
+
+# 設定ファイルの読み込み
+with open(config_file_path, 'r') as config_file:
+    config_data = json.load(config_file)
+
+# 変更を加える
+config_data["test"] = "1324"
+
+# 記録ファイル名
+ar_filename = f"{current_date_y}Attendance records.xlsx"
 
 # ファイルが存在するかチェック
 if not os.path.exists(ar_filename):
     # ファイルが存在しない場合の処理
     SApy()
 
-if not os.path.exists("Register.db"):
-    exit_with_error("(File not found (Register.db)")
 
 while True:  #? 無限ループ
     # GUI画面のレイアウト
@@ -585,6 +617,9 @@ while True:  #? 無限ループ
     
     if event == sg.WIN_CLOSED or event == '終了':  # Xボタンが押されたか、'終了'ボタンが押された場合
         menu.close()
+        # JSONデータを保存
+        with open('config.json', 'w') as f:
+            json.dump(config_data, f, indent=4)
         sys.exit(0)
     
     if event == '記録':
