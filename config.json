@@ -1,6 +1,6 @@
 {
     "passPhrase": "1111",
-    "Lateness_time": "15",
+    "Lateness_time": 15,
     "test": "1324",
     "LateAgitation": false,
     "AutomaticLateTimeSetting": true,

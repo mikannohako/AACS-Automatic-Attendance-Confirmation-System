@@ -505,8 +505,8 @@ def control_panel(): #? 管理画面
                     sg.Checkbox('起動時の時間 + X 分後に自動的に決める。', default=Automatic_late_time_setting, key='-AutomaticLateTimeSetting-', enable_events=True),
                     sg.Checkbox('時間を手動で入力する。', default=Manual_late_time_setting, key='-ManualLateTimeSetting-', enable_events=True)
                 ],
-                [sg.Text('自動設定の場合のを決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey')],
-                [sg.Button('終了')]
+                [sg.Text('自動設定の場合の X を決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey')],
+                [sg.Button('戻る')]
             ]
             
             # ウィンドウの生成
@@ -520,7 +520,11 @@ def control_panel(): #? 管理画面
                 
                 if event == sg.WINDOW_CLOSED or event == '終了': # 終了
                     window.close()
-                    config_data["Lateness_time"] = values['-LatenessTime-']
+                    
+                    lateness_time_str = values['-LatenessTime-']  # InputTextウィジェットからの文字列を取得
+                    lateness_time_int = int(lateness_time_str)  # 文字列をint型に変換
+                    
+                    config_data["Lateness_time"] = lateness_time_int
                     
                     json_save()
                     
