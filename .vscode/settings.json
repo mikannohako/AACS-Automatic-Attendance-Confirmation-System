@@ -30,6 +30,7 @@
                 "pkcs7",
                 "COUNTIF",
                 "askboolean",
-                "LATEAGITATION"
+                "LATEAGITATION",
+                "levelname"
         ]
 }

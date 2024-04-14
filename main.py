@@ -14,12 +14,24 @@ import openpyxl
 from openpyxl import load_workbook
 from openpyxl.worksheet.table import TableStyleInfo
 import json
+import logging
+
+#? ログの設定
+
+# ログファイルの出力パス
+filename = 'logfile.log'
+
+# ログのメッセージフォーマットを指定
+fmt = "%(asctime)s - %(levelname)s - %(message)s - %(module)s - %(funcName)s - %(lineno)d"
+
+# ログの出力レベルを設定
+logging.basicConfig(filename=filename, encoding='utf-8', level=logging.INFO, format=fmt)
 
 #? 各機能の関数
 
 def exit_with_error(message): #? エラー時の処理
-    print(f"Error: {message}")
-    messagebox.showerror("Error", message)
+    logging.warn(f"{message}")
+    messagebox.showerror("Error", "エラーが発生しました。")
     sys.exit(1)  # アプリケーションをエラーコード 1 で終了します
 
 def json_save(): #? JSONデータを保存
@@ -107,9 +119,9 @@ def SApy(): #? 記録ファイル作成
     if sheet_name_to_delete in workbook.sheetnames:
         sheet_to_delete = workbook[sheet_name_to_delete]
         workbook.remove(sheet_to_delete)
-        print("Temporary sheet deletion >>> done")
+        logging.info("Temporary sheet deletion >>> done")
     else:
-        print("Temporary sheet deletion >>> undone")
+        logging.warning("Temporary sheet deletion >>> undone")
     
     # エクセルファイルを保存
     workbook.save(f"{current_date_y}Attendance records.xlsx")
@@ -179,9 +191,6 @@ def GApy(): #? 出席
             if lateness_time_hour < 0 or lateness_time_hour > 23 or lateness_time_minute < 0 or lateness_time_minute > 59:
                 messagebox.showwarning("警告", "無効な時間です。正しい形式で再度入力してください。")
                 continue
-            else:
-                print("入力された時間は {} 時間 {} 分です。".format(hours, minutes))
-            
             
             if messagebox.askokcancel("確認", f'{lateness_time_hour}時{lateness_time_minute}分から遅刻に設定しますか？'):
                 messagebox.showinfo("INFO", f"{lateness_time_hour}時{lateness_time_minute}分以降を遅刻として設定しました。")
@@ -329,8 +338,6 @@ def GApy(): #? 出席
                 cursor.execute('SELECT GradeinSchool FROM Register WHERE Name = ?', (name,))
                 result = cursor.fetchone()
             
-            
-            print('Name:', name)
             if result:
                 
                 absence_state = values['-ABSENCE-']
@@ -402,7 +409,7 @@ def GApy(): #? 出席
                             break
             else:
                 # 失敗処理
-                print(f"{name} はデータベースに存在しません。")
+                logging.error(f"{name} はデータベースに存在しません。")
                 messagebox.showinfo('失敗', f'{name} はデータベースに存在しません。')
                 window["-NAME-"].update("")  # 入力フィールドをクリア
                 window.close()
@@ -448,15 +455,10 @@ def GApy(): #? 出席
                 if sheet_name_to_delete in workbook.sheetnames:
                     sheet_to_delete = workbook[sheet_name_to_delete]
                     workbook.remove(sheet_to_delete)
-                    print("Temporary sheet deletion >>> done")
                 else:
-                    print("Temporary sheet deletion >>> undone")
+                    logging.warning("Temporary sheet deletion failure.")
                 
                 workbook.save(ar_filename)
-                
-                
-                #? excelの色付け
-                print("Color Change >>> ", end="")
                 
                 # 時間変数の設定
                 current_date = datetime.now()
@@ -473,8 +475,6 @@ def GApy(): #? 出席
                 # 変更を保存する
                 workbook.save(ar_filename)
                 
-                print("done")
-                
                 messagebox.showinfo('完了', '記録終了は正常に終了しました。')
                 window.close()
                 break
@@ -484,7 +484,6 @@ def GApy(): #? 出席
 def control_panel(): #? 管理画面
     
     def DB_Operations(): # DB変更
-        print("DB_Operations")
         messagebox.showinfo("INFO", "まだこの機能は実装されていません")
     
     def setting(): # 設定変更画面
@@ -532,10 +531,8 @@ def control_panel(): #? 管理画面
                 
                 if event == '-LateAgitation-': # 遅刻時の煽り
                     if values['-Late_agitation-']:
-                        print("遅刻時の煽りがオンになりました")
                         config_data["LateAgitation"] = True
                     else:
-                        print("遅刻時の煽りがオフになりました")
                         config_data["LateAgitation"] = False
                 
                 if event == '-AutomaticLateTimeSetting-':
