@@ -505,7 +505,7 @@ def control_panel(): #? 管理画面
                     sg.Checkbox('起動時の時間 + X 分後に自動的に決める。', default=Automatic_late_time_setting, key='-AutomaticLateTimeSetting-', enable_events=True),
                     sg.Checkbox('時間を手動で入力する。', default=Manual_late_time_setting, key='-ManualLateTimeSetting-', enable_events=True)
                 ],
-                [sg.Text('自動設定の場合の X を決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey')],
+                [sg.Text('自動設定の場合の X を決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey', enable_events=True)],
                 [sg.Button('戻る')]
             ]
             
@@ -518,13 +518,16 @@ def control_panel(): #? 管理画面
                 
                 Late_agitation = config_data['LateAgitation']
                 
-                if event == sg.WINDOW_CLOSED or event == '終了': # 終了
+                Lateness_Time = values['-LatenessTime-']
+                
+                if event == sg.WINDOW_CLOSED or event == '戻る': # 終了
                     window.close()
                     
-                    lateness_time_str = values['-LatenessTime-']  # InputTextウィジェットからの文字列を取得
-                    lateness_time_int = int(lateness_time_str)  # 文字列をint型に変換
-                    
-                    config_data["Lateness_time"] = lateness_time_int
+                    if not Lateness_Time == None:
+                        lateness_time_str = Lateness_Time  # InputTextウィジェットからの文字列を取得
+                        lateness_time_int = int(lateness_time_str)  # 文字列をint型に変換
+                        
+                        config_data["Lateness_time"] = lateness_time_int
                     
                     json_save()
                     
@@ -562,27 +565,28 @@ def control_panel(): #? 管理画面
     def password_change(): # パスワード変更
         password = simpledialog.askstring("パスワード入力", "パスワードを入力してください")
         
-        # パスワードをUTF-8形式でエンコードしてハッシュ化
-        hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
-        
-        if hashed_password == config_data['passPhrase']:
-            messagebox.showinfo("成功", "パスワードの認証に成功しました。")
-            new_passphrase = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください。')
-            new_passphrase_1 = simpledialog.askstring("再入力", "パスワードをもう一度入力してください。")
-            if new_passphrase_1 == new_passphrase:
-                try:
-                    # パスワードをUTF-8形式でエンコードしてハッシュ化
-                    hashed_password = hashlib.sha256(new_passphrase.encode('utf-8')).hexdigest()
-                    config_data["passPhrase"] = hashed_password
-                    json_save()
-                    logging.info(f"パスワードが変更されました。ハッシュ値: {hashed_password}")
-                    messagebox.showinfo("成功", "パスワードの変更に成功しました。")
-                except:
-                    messagebox.showinfo("失敗", "パスワードの変更に失敗しました。")
+        if not password == None:
+            # パスワードをUTF-8形式でエンコードしてハッシュ化
+            hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
+            
+            if hashed_password == config_data['passPhrase']:
+                messagebox.showinfo("成功", "パスワードの認証に成功しました。")
+                new_passphrase = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください。')
+                new_passphrase_1 = simpledialog.askstring("再入力", "パスワードをもう一度入力してください。")
+                if new_passphrase_1 == new_passphrase:
+                    try:
+                        # パスワードをUTF-8形式でエンコードしてハッシュ化
+                        hashed_password = hashlib.sha256(new_passphrase.encode('utf-8')).hexdigest()
+                        config_data["passPhrase"] = hashed_password
+                        json_save()
+                        logging.info(f"パスワードが変更されました。ハッシュ値: {hashed_password}")
+                        messagebox.showinfo("成功", "パスワードの変更に成功しました。")
+                    except:
+                        messagebox.showinfo("失敗", "パスワードの変更に失敗しました。")
+                else:
+                    messagebox.showinfo("失敗", "パスワードの再入力に失敗しました。")
             else:
-                messagebox.showinfo("失敗", "パスワードの再入力に失敗しました。")
-        else:
-            messagebox.showinfo("失敗", "パスワードの認証に失敗しました。")
+                messagebox.showinfo("失敗", "パスワードの認証に失敗しました。")
     
     #? 管理画面
     
@@ -687,10 +691,11 @@ while True:  #? 無限ループ
         tk.Tk().withdraw()
         user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
         
-        # パスワードをUTF-8形式でエンコードしてハッシュ化
-        hashed_password = hashlib.sha256(user_pass.encode('utf-8')).hexdigest()
-        
-        if config_data["passPhrase"] == hashed_password:
-            control_panel()
-        else:
-            messagebox.showerror("ERROR", "パスワードが間違っています。")
+        if not user_pass == None:
+            # パスワードをUTF-8形式でエンコードしてハッシュ化
+            hashed_password = hashlib.sha256(user_pass.encode('utf-8')).hexdigest()
+            
+            if config_data["passPhrase"] == hashed_password:
+                control_panel()
+            else:
+                messagebox.showerror("ERROR", "パスワードが間違っています。")
