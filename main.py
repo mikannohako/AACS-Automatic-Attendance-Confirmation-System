@@ -15,6 +15,7 @@ from openpyxl import load_workbook
 from openpyxl.worksheet.table import TableStyleInfo
 import json
 import logging
+import hashlib
 
 #? ログの設定
 
@@ -119,12 +120,12 @@ def SApy(): #? 記録ファイル作成
     if sheet_name_to_delete in workbook.sheetnames:
         sheet_to_delete = workbook[sheet_name_to_delete]
         workbook.remove(sheet_to_delete)
-        logging.info("Temporary sheet deletion >>> done")
     else:
         logging.warning("Temporary sheet deletion >>> undone")
     
     # エクセルファイルを保存
     workbook.save(f"{current_date_y}Attendance records.xlsx")
+    logging.info("記録用ファイルが作成されました。")
 
 def GApy(): #? 出席
     #? config設定
@@ -561,17 +562,23 @@ def control_panel(): #? 管理画面
     def password_change(): # パスワード変更
         password = simpledialog.askstring("パスワード入力", "パスワードを入力してください")
         
-        if password == config_data['passPhrase']:
+        # パスワードをUTF-8形式でエンコードしてハッシュ化
+        hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
+        
+        if hashed_password == config_data['passPhrase']:
             messagebox.showinfo("成功", "パスワードの認証に成功しました。")
             new_passphrase = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください。')
             new_passphrase_1 = simpledialog.askstring("再入力", "パスワードをもう一度入力してください。")
             if new_passphrase_1 == new_passphrase:
                 try:
-                    config_data["passPhrase"] = new_passphrase
+                    # パスワードをUTF-8形式でエンコードしてハッシュ化
+                    hashed_password = hashlib.sha256(new_passphrase.encode('utf-8')).hexdigest()
+                    config_data["passPhrase"] = hashed_password
                     json_save()
+                    logging.info(f"パスワードが変更されました。ハッシュ値: {hashed_password}")
                     messagebox.showinfo("成功", "パスワードの変更に成功しました。")
                 except:
-                    messagebox.showinfo("失敗", "パスワードの変更に失敗しました。\nconfig.jsonファイルが他のプロセスに使用されている場合があります。")
+                    messagebox.showinfo("失敗", "パスワードの変更に失敗しました。")
             else:
                 messagebox.showinfo("失敗", "パスワードの再入力に失敗しました。")
         else:
@@ -680,7 +687,10 @@ while True:  #? 無限ループ
         tk.Tk().withdraw()
         user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
         
-        if config_data["passPhrase"] == user_pass:
+        # パスワードをUTF-8形式でエンコードしてハッシュ化
+        hashed_password = hashlib.sha256(user_pass.encode('utf-8')).hexdigest()
+        
+        if config_data["passPhrase"] == hashed_password:
             control_panel()
         else:
             messagebox.showerror("ERROR", "パスワードが間違っています。")
