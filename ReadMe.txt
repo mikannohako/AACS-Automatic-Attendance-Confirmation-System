@@ -8,7 +8,6 @@
 ■　主な機能
 
 ・出欠をExcelファイルに記録
-・Excelの出席、欠席を色分け
 
 --------------------
 ■　動作環境
@@ -26,10 +25,10 @@
 --------------------
 ■　アップデート
 
-・アップデート前の「AACS.exe」を削除してアップデート後の「AACS.exe」配置してください。
+・起動時に自動的に更新されます。
 
 アップデート用のファイルはGithubにあります。
-URL: https://github.com/mikannohako/AACS-Automatic-attendance-confirmation-system/releases
+URL: https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases
 （公開されてない場合は404Not Foundと表示されることがあります。）
 
 --------------------
@@ -42,7 +41,3 @@ URL: https://github.com/mikannohako/AACS-Automatic-attendance-confirmation-syste
 
 1. 「AACS.exe」を実行してください。
 2. メニュー画面が出るので使用する機能を選んでください
-
-   （通常出席の場合）
-1. 遅刻に設定する時刻を入力してください。
-2. 左上の入力ボックスにデータベースに記録されている名前かIDを入力してください。

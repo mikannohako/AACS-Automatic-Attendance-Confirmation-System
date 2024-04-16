@@ -62,11 +62,12 @@ def update(): #? アップデート
             if config_data["version"] < tag_name_int:
                 if messagebox.askyesno("更新", "新しいバージョンがリリースされています。\n更新しますか？"):
                     # 最新のバージョンをダウンロードする
-                    # 外部実行ファイルのパス
-                    executable_path = "update.exe"
                     
-                    # 更新の実行ファイルを実行する
-                    subprocess.run([executable_path])
+                    # 現在のスクリプトがあるディレクトリを取得
+                    script_dir = os.path.dirname(os.path.abspath(__file__))
+                    
+                    # 更新の実行ファイルを非同期で実行する
+                    subprocess.Popen([os.path.join(script_dir, "update.exe")])
                     
                     sys.exit(0)
     

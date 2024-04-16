@@ -111,7 +111,7 @@ def update(): #? アップデート
                         with zipfile.ZipFile("AACS.zip", "r") as zip_ref:
                             zip_ref.extractall(".")
                     except Exception:
-                        messagebox.error("Error", "エラーが発生しました。")
+                        messagebox.showerror("Error", "エラーが発生しました。")
                         logging.warn("ZIPの解凍ができない。")
                     
                     window['-PROG-'].update(60)
