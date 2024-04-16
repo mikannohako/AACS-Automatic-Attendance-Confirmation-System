@@ -108,7 +108,7 @@ def update(): #? アップデート
                     
                     try:
                         # ZIPファイルを解凍
-                        with zipfile.ZipFile("AACS.zip", "r") as zip_ref:
+                        with zipfile.ZipFile("update.zip", "r") as zip_ref:
                             zip_ref.extractall(".")
                     except Exception:
                         messagebox.showerror("Error", "エラーが発生しました。")
@@ -118,6 +118,7 @@ def update(): #? アップデート
                     
                     # ZIPファイルを削除
                     os.remove("AACS.zip")
+                    
                     
                     window['-PROG-'].update(70)
                     
