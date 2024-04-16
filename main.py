@@ -8,7 +8,6 @@ from tkinter import messagebox
 from tkinter import simpledialog
 import tkinter as tk
 import tkinter.simpledialog as simpledialog
-from tkinter import filedialog
 import sqlite3
 import openpyxl
 from openpyxl import load_workbook
@@ -17,7 +16,7 @@ import json
 import logging
 import hashlib
 import requests
-import zipfile
+import subprocess
 
 #? ログの設定
 
@@ -38,9 +37,6 @@ def exit_with_error(message): #? エラー時の処理
     sys.exit(1)  # アプリケーションをエラーコード 1 で終了します
 
 def update(): #? アップデート
-    
-    if check_internet_connection():
-        update_check()
     
     def check_internet_connection():
         try:
@@ -66,98 +62,16 @@ def update(): #? アップデート
             if config_data["version"] < tag_name_int:
                 if messagebox.askyesno("更新", "新しいバージョンがリリースされています。\n更新しますか？"):
                     # 最新のバージョンをダウンロードする
-                    file_update()
+                    # 外部実行ファイルのパス
+                    executable_path = "update.exe"
+                    
+                    # 更新の実行ファイルを実行する
+                    subprocess.run([executable_path])
+                    
+                    sys.exit(0)
     
-    def file_update():
-        
-        BAR_MAX = 70
-
-        layout = [
-            [sg.Text('更新中')],
-            [sg.ProgressBar(BAR_MAX, orientation='h', size=(20, 20), key='-PROG-')],
-            ]
-        
-        window = sg.Window('プログレスバー', layout)
-        
-        # ここでウィンドウを初期化
-        event, values = window.read(timeout=0)
-        if event == sg.WINDOW_CLOSED:
-            window.close()
-            return
-        
-        window['-PROG-'].update(10)
-        
-        # GitHubのリポジトリ情報
-        api_url = f"https://api.github.com/repos/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest"
-        
-        # 最新のリリース情報を取得
-        response = requests.get(api_url)
-        if response.status_code == 200:
-            release_info = response.json()
-            # バージョン取得
-            tag_name = release_info["tag_name"]
-            
-            window['-PROG-'].update(20)
-            
-            assets = release_info["assets"]
-            # 最新のZIPファイルのダウンロードURLを取得
-            download_url = None  # 初期値を設定
-            for asset in assets:
-                if asset["name"] == "AACS.zip":
-                    download_url = asset["browser_download_url"]
-                    break
-                
-            window['-PROG-'].update(30)
-            
-            # ZIPファイルをダウンロード
-            if download_url:
-                response = requests.get(download_url)
-                if response.status_code == 200:
-                    
-                    window['-PROG-'].update(40)
-                    
-                    # ZIPファイルを保存
-                    with open("AACS.zip", "wb") as f:
-                        f.write(response.content)
-                    
-                    window['-PROG-'].update(50)
-                    
-                    # ZIPファイルを解凍
-                    with zipfile.ZipFile("AACS.zip", "r") as zip_ref:
-                        zip_ref.extractall(".")
-                    
-                    window['-PROG-'].update(60)
-                    
-                    # ZIPファイルを削除
-                    os.remove("AACS.zip")
-                    
-                    window['-PROG-'].update(70)
-                    
-                    # configをバージョンアップ
-                    # バージョン取得
-                    tag_name = release_info["tag_name"]
-                    tag_name_int = int(tag_name.replace("v", "").replace(".", ""))
-                    config_data["version"] = tag_name_int
-                    json_save()
-                    
-                    logging.info(f"{tag_name}に更新しました。")
-                    
-                    window.close()
-                    
-                    messagebox.showinfo("完了", "正常に更新されました。\n自動的に終了します。")
-                    
-                    sys.exit(0)  # アプリケーションを正常終了コード 0 で終了します。
-                else:
-                    logging.warning("ZIPファイルのダウンロードに失敗しました。")
-                    
-                    messagebox.showwarning("失敗", "更新が失敗しました。\nネットワークの問題の可能性があります。")
-                    return
-            else:
-                logging.warning("リリースにZIPファイルが見つかりません。")
-        else:
-            logging.warning("リリース情報の取得に失敗しました。")
-        
-        messagebox.showwarning("失敗", "更新が失敗しました。")
+    if check_internet_connection():
+        update_check()
 
 def json_save(): #? JSONデータを保存
     #
