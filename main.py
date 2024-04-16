@@ -41,7 +41,7 @@ def update(): #? アップデート
     
     if check_internet_connection():
         update_check()
-
+    
     def check_internet_connection():
         try:
             response = requests.get("http://www.google.com", timeout=5)
