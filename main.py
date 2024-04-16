@@ -774,7 +774,7 @@ config_file_path = 'config.json'
 with open(config_file_path, 'r') as config_file:
     config_data = json.load(config_file)
 
-
+update()
 
 # 記録ファイル名
 ar_filename = f"{current_date_y}Attendance records.xlsx"
