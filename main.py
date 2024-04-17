@@ -63,11 +63,11 @@ def update(): #? アップデート
                 if messagebox.askyesno("更新", "新しいバージョンがリリースされています。\n更新しますか？"):
                     # 最新のバージョンをダウンロードする
                     
-                    # 現在のスクリプトがあるディレクトリを取得
-                    script_dir = os.path.dirname(os.path.abspath(__file__))
+                    # 実行ファイルがあるディレクトリを取得
+                    exe_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
                     
                     # 更新の実行ファイルを非同期で実行する
-                    subprocess.Popen([os.path.join(script_dir, "update.exe")])
+                    subprocess.Popen([os.path.join(exe_dir, "update.exe")])
                     
                     sys.exit(0)
     

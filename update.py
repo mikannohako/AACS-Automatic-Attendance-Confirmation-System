@@ -87,7 +87,7 @@ def update(): #? アップデート
             # 最新のZIPファイルのダウンロードURLを取得
             download_url = None  # 初期値を設定
             for asset in assets:
-                if asset["name"] == "AACS.zip":
+                if asset["name"] == "update.zip":
                     download_url = asset["browser_download_url"]
                     break
                 
