@@ -8,6 +8,17 @@ import logging
 import requests
 import zipfile
 
+#? ログの設定
+
+# ログファイルの出力パス
+filename = 'logfile.log'
+
+# ログのメッセージフォーマットを指定
+fmt = "%(asctime)s - %(levelname)s - %(message)s - %(module)s - %(funcName)s - %(lineno)d"
+
+# ログの出力レベルを設定
+logging.basicConfig(filename=filename, encoding='utf-8', level=logging.INFO, format=fmt)
+
 # 設定ファイルのパス
 config_file_path = 'config.json'
 
@@ -101,7 +112,7 @@ def update(): #? アップデート
                     window['-PROG-'].update(40)
                     
                     # ZIPファイルを保存
-                    with open("AACS.zip", "wb") as f:
+                    with open("update.zip", "wb") as f:
                         f.write(response.content)
                     
                     window['-PROG-'].update(50)
@@ -113,11 +124,12 @@ def update(): #? アップデート
                     except Exception:
                         messagebox.showerror("Error", "エラーが発生しました。")
                         logging.warn("ZIPの解凍ができない。")
+                        return
                     
                     window['-PROG-'].update(60)
                     
                     # ZIPファイルを削除
-                    os.remove("AACS.zip")
+                    os.remove("update.zip")
                     
                     
                     window['-PROG-'].update(70)
