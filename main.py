@@ -63,11 +63,16 @@ def update(): #? アップデート
                 if messagebox.askyesno("更新", "新しいバージョンがリリースされています。\n更新しますか？"):
                     # 最新のバージョンをダウンロードする
                     
-                    # 実行ファイルがあるディレクトリを取得
-                    exe_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+                    # 実行するファイルの相対パスを指定する
+                    relative_path = "update.exe"
+                    
+                    # 実行するファイルの絶対パスを取得する
+                    executable_path = os.path.abspath(relative_path)
                     
                     # 更新の実行ファイルを非同期で実行する
-                    subprocess.Popen([os.path.join(exe_dir, "update.exe")])
+                    subprocess.Popen([executable_path])
+                    
+                    messagebox.showinfo("INFO", "起動に時間がかかる場合があります。")
                     
                     sys.exit(0)
     
