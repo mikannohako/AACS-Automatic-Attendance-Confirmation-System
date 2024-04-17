@@ -56,10 +56,9 @@ def update(): #? アップデート
             tag_name_int = int(tag_name.replace("v", "").replace(".", ""))
             
             if config_data["version"] < tag_name_int:
-                if messagebox.askyesno("更新", "更新しますか？"):
-                    messagebox.showinfo("info", "実行中のAACSは閉じてください。")
-                    # 最新のバージョンをダウンロードする
-                    file_update()
+                messagebox.showinfo("info", "実行中のAACSがある場合は閉じてください。")
+                # 最新のバージョンをダウンロードする
+                file_update()
             else:
                 messagebox.showinfo("更新", "最新バージョンです。")
     
@@ -72,7 +71,7 @@ def update(): #? アップデート
             [sg.ProgressBar(BAR_MAX, orientation='h', size=(20, 20), key='-PROG-')],
             ]
         
-        window = sg.Window('プログレスバー', layout)
+        window = sg.Window('プログレスバー', layout, keep_on_top=True)
         
         # ここでウィンドウを初期化
         event, values = window.read(timeout=0)
