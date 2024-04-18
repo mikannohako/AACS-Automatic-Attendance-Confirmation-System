@@ -31,6 +31,13 @@ def json_save(): #? JSONデータを保存
     with open('config.json', 'w') as f:
         json.dump(config_data, f, indent=4)
 
+# Tkinterウィンドウを作成
+root = tk.Tk()
+# topmost指定(最前面)
+root.attributes('-topmost', True)
+root.withdraw()
+root.lift()
+root.focus_force()
 
 def update(): #? アップデート
     
