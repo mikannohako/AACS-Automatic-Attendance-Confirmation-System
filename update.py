@@ -71,7 +71,7 @@ def update(): #? アップデート
             [sg.ProgressBar(BAR_MAX, orientation='h', size=(20, 20), key='-PROG-')],
             ]
         
-        window = sg.Window('プログレスバー', layout, keep_on_top=True)
+        window = sg.Window('更新中', layout, keep_on_top=True)
         
         # ここでウィンドウを初期化
         event, values = window.read(timeout=0)

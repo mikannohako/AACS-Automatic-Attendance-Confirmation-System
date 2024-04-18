@@ -18,6 +18,22 @@ import hashlib
 import requests
 import subprocess
 
+BAR_MAX = 70
+
+layout = [
+    [sg.Text('起動中')],
+    [sg.ProgressBar(BAR_MAX, orientation='h', size=(20, 20), key='-PROG-')],
+    ]
+
+window = sg.Window('起動中', layout, keep_on_top=True)
+
+# ここでウィンドウを初期化
+event, values = window.read(timeout=0)
+if event == sg.WINDOW_CLOSED:
+    window.close()
+
+window['-PROG-'].update(10)
+
 #? ログの設定
 
 # ログファイルの出力パス
@@ -28,6 +44,8 @@ fmt = "%(asctime)s - %(levelname)s - %(message)s - %(module)s - %(funcName)s - %
 
 # ログの出力レベルを設定
 logging.basicConfig(filename=filename, encoding='utf-8', level=logging.INFO, format=fmt)
+
+window['-PROG-'].update(20)
 
 #? 各機能の関数
 
@@ -666,6 +684,8 @@ def control_panel(): #? 管理画面
 
 #? 起動
 
+window['-PROG-'].update(30)
+
 #? 初期設定
 
 # Tkinterウィンドウを作成
@@ -676,6 +696,8 @@ root.withdraw()
 root.lift()
 root.focus_force()
 
+window['-PROG-'].update(40)
+
 #? ファイルの存在確認
 if not os.path.exists("config.json"):
     exit_with_error("config.json file not found.")
@@ -683,9 +705,9 @@ if not os.path.exists("config.json"):
 if not os.path.exists("Register.db"):
     exit_with_error("Register.db file not found.")
 
-# 時間変数の設定
-current_date = datetime.now()
-current_date_y = current_date.strftime("%Y")
+window['-PROG-'].update(50)
+
+#? config読み込み
 
 # 設定ファイルのパス
 config_file_path = 'config.json'
@@ -694,7 +716,13 @@ config_file_path = 'config.json'
 with open(config_file_path, 'r') as config_file:
     config_data = json.load(config_file)
 
-update()
+window['-PROG-'].update(60)
+
+#? ファイルチェック
+
+# 時間変数の設定
+current_date = datetime.now()
+current_date_y = current_date.strftime("%Y")
 
 # 記録ファイル名
 ar_filename = f"{current_date_y}Attendance records.xlsx"
@@ -704,6 +732,10 @@ if not os.path.exists(ar_filename):
     # ファイルが存在しない場合の処理
     SApy()
 
+window['-PROG-'].update(70)
+
+window.close()
+update()
 
 while True:  #? 無限ループ
     # GUI画面のレイアウト
