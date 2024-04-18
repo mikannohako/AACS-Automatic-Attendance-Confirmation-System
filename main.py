@@ -50,8 +50,8 @@ window['-PROG-'].update(20)
 #? 各機能の関数
 
 def exit_with_error(message): #? エラー時の処理
-    logging.warn(f"{message}")
-    messagebox.showerror("Error", "エラーが発生しました。")
+    logging.critical(f"{message}")
+    messagebox.showerror("Error", f"エラーが発生しました。\n{message}")
     sys.exit(1)  # アプリケーションをエラーコード 1 で終了します
 
 def update(): #? アップデート
@@ -84,15 +84,18 @@ def update(): #? アップデート
                     # 実行するファイルの相対パスを指定する
                     relative_path = "update.exe"
                     
-                    # 実行するファイルの絶対パスを取得する
-                    executable_path = os.path.abspath(relative_path)
-                    
-                    # 更新の実行ファイルを非同期で実行する
-                    subprocess.Popen([executable_path])
-                    
-                    messagebox.showinfo("INFO", "起動に時間がかかる場合があります。")
-                    
-                    sys.exit(0)
+                    try:
+                        # 実行するファイルの絶対パスを取得する
+                        executable_path = os.path.abspath(relative_path)
+                        
+                        # 更新の実行ファイルを非同期で実行する
+                        subprocess.Popen([executable_path])
+                        
+                        messagebox.showinfo("INFO", "起動に時間がかかる場合があります。")
+                        
+                        sys.exit(0)
+                    except FileNotFoundError:
+                        exit_with_error("実行ファイルが見つかりません。")
     
     if check_internet_connection():
         update_check()
