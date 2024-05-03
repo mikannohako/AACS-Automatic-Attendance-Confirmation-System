@@ -16,7 +16,7 @@ import json
 import logging
 import hashlib
 import requests
-import subprocess
+import webbrowser
 
 BAR_MAX = 70
 
@@ -78,24 +78,13 @@ def update(): #? アップデート
             tag_name_int = int(tag_name.replace("v", "").replace(".", ""))
             
             if config_data["version"] < tag_name_int:
-                if messagebox.askyesno("更新", "新しいバージョンがリリースされています。\n更新しますか？"):
+                if messagebox.askyesno("更新", "新しいバージョンがリリースされています。\n更新してください。"):
                     # 最新のバージョンをダウンロードする
                     
-                    # 実行するファイルの相対パスを指定する
-                    relative_path = "update.exe"
+                    url = 'https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest'
+                    webbrowser.open(url)
                     
-                    try:
-                        # 実行するファイルの絶対パスを取得する
-                        executable_path = os.path.abspath(relative_path)
-                        
-                        # 更新の実行ファイルを非同期で実行する
-                        subprocess.Popen([executable_path])
-                        
-                        messagebox.showinfo("INFO", "起動に時間がかかる場合があります。")
-                        
-                        sys.exit(0)
-                    except FileNotFoundError:
-                        exit_with_error("実行ファイルが見つかりません。")
+                    sys.exit(0)
     
     if check_internet_connection():
         update_check()
@@ -163,7 +152,7 @@ def SApy(): #? 記録ファイル作成
             sheet.cell(row=row_number, column=9).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*早退*")'  # 早退
         
         end_row = len(all_data) + 1 # データの数に基づいて終了行を決定する
-        table_range = f"A1:B{end_row}"  # 範囲を変数に格納する
+        table_range = f"A1:I{end_row}"  # 範囲を変数に格納する
         table = openpyxl.worksheet.table.Table(displayName=f"Table{month}", ref=table_range)
         
         # スタイル設定
@@ -377,14 +366,26 @@ def GApy(): #? 出席
         window.Maximize()
         return window  # window変数を返す
     
-    def get_name_by_id(input_id): #? IDから名前を取得
+    def get_id_by_name(input_name): #? 名前からIDを取得
         # IDに対応するnameをクエリで検索
-        cursor.execute("SELECT Name FROM Register WHERE ID=?", (input_id,))
+        cursor.execute("SELECT ID FROM Register WHERE Name=?", (input_name,))
         result = cursor.fetchone()  # 一致する最初の行を取得
         if result:
-            return result[0]  # nameを返す
+            return result[0]  # IDを返す
         else:
             return "IDに対応する名前が見つかりません"
+    
+    def get_name_by_id(id): #? IDから名前を取得
+        
+        # IDに対応する名前を取得するSQLクエリを実行
+        cursor.execute("SELECT Name FROM Register WHERE ID=?", (id,))
+        result = cursor.fetchone()
+        
+        if result:
+            return result[0]  # 名前を返す
+        else:
+            return "出席処理されていない名前"  # IDに対応する名前が見つからない場合は特定の値を返す
+    
     
     window = mainwindowshow()  # mainwindowshow()関数を呼び出して、window変数に格納する
     
@@ -396,12 +397,23 @@ def GApy(): #? 出席
         #? OKが押されたときの処理
         if event == 'OK' or event == 'Escape:13' or capbool:
             name = values["-NAME-"]
+            name_name = name
             
-            if name.isdigit():
-                name = get_name_by_id(int(name))
-                result = name
-            else:
-                cursor.execute('SELECT GradeinSchool FROM Register WHERE Name = ?', (name,))
+            cursor.execute("SELECT * FROM Register WHERE ID=?", (name,))
+            result = cursor.fetchone()
+            name = get_name_by_id(name)
+            
+            
+            
+            if not result:
+                if not config_data['NameEntryAllowed']:
+                    messagebox.showwarning("WARNING", "名前での入力は許可されていません。\nIDで入力してください。")
+                    window.close()
+                    window = mainwindowshow()
+                    continue
+                
+                name = name_name
+                cursor.execute("SELECT * FROM Register WHERE Name=?", (name,))
                 result = cursor.fetchone()
             
             if result:
@@ -456,8 +468,7 @@ def GApy(): #? 出席
                             conn.commit()  # 変更を確定
                             
                             if info == "遅刻" and config_data['LateAgitation']:
-                                reason = sg.popup_get_text('なんで遅刻したの？？？？')
-                                messagebox.showinfo('知らん', '知ったこっちゃない')
+                                reason = sg.popup_get_text('遅刻した理由を答えてください。')
                                 
                                 # 遅刻シートが存在しない場合は作成する
                                 if "遅刻理由" not in workbook.sheetnames:
@@ -560,17 +571,19 @@ def control_panel(): #? 管理画面
             Automatic_late_time_setting = config_data['AutomaticLateTimeSetting']
             Manual_late_time_setting = config_data['ManualLateTimeSetting']
             Lateness_Time = config_data['Lateness_time']
+            NameEntryAllowed = config_data['NameEntryAllowed']
             
             # レイアウトの定義
             layout = [
                 [sg.Text('変更したい設定だけ変更してください。')],
-                [sg.Text('遅刻時の煽り')],
+                [sg.Text('遅刻時の質問')],
                 [sg.Checkbox('遅刻時の煽り', default=Late_agitation, key='-LateAgitation-', enable_events=True),],
                 [
                     sg.Checkbox('起動時の時間 + X 分後に自動的に決める。', default=Automatic_late_time_setting, key='-AutomaticLateTimeSetting-', enable_events=True),
                     sg.Checkbox('時間を手動で入力する。', default=Manual_late_time_setting, key='-ManualLateTimeSetting-', enable_events=True)
                 ],
                 [sg.Text('自動設定の場合の X を決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey', enable_events=True)],
+                [sg.Checkbox('名前入力を許可する。', default=NameEntryAllowed, key='-NameEntryAllowed-', enable_events=True), sg.Text('memo:不許可にすると名前による出席が拒否されます。')], 
                 [sg.Button('戻る')]
             ]
             
@@ -614,7 +627,7 @@ def control_panel(): #? 管理画面
                         # config変更
                         config_data["AutomaticLateTimeSetting"] = True
                         config_data["ManualLateTimeSetting"] = False
-                    
+                
                 elif event == '-ManualLateTimeSetting-':
                     if values['-ManualLateTimeSetting-']:
                         window['-AutomaticLateTimeSetting-'].update(False)
@@ -625,6 +638,12 @@ def control_panel(): #? 管理画面
                         # config変更
                         config_data["AutomaticLateTimeSetting"] = False
                         config_data["ManualLateTimeSetting"] = True
+                
+                if event == '-NameEntryAllowed-':
+                    if values['-NameEntryAllowed-']:
+                        config_data["NameEntryAllowed"] = True
+                    else:
+                        config_data["NameEntryAllowed"] = False
 
     
     def password_change(): # パスワード変更
