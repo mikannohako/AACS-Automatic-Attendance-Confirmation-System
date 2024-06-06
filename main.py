@@ -143,7 +143,7 @@ def SApy(): #? 記録ファイル作成
             row_number = sheet.max_row + 1
             sheet.cell(row=row_number, column=1, value=data[0])  # 名前
             sheet.cell(row=row_number, column=2, value=data[1])  # 学年
-            sheet.cell(row=row_number, column=3).value = f'= ( E{row_number} / D{row_number}) * 100'
+            sheet.cell(row=row_number, column=3).value = f'=IFERROR( ( E{row_number} / D{row_number}) * 100, "No data")'
             sheet.cell(row=row_number, column=4).value = f'=COUNTIF(J{row_number}:BA{row_number}, "<>")'  # 全日数
             sheet.cell(row=row_number, column=5).value = f'=(COUNTIF(J{row_number}:BA{row_number}, "*出席*") + H{row_number} + I{row_number})'  # 出席
             sheet.cell(row=row_number, column=6).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*欠席*")'  # 欠席
@@ -259,7 +259,7 @@ def GApy(): #? 出席
     try:
         workbook = load_workbook(ar_filename)
     except FileNotFoundError:
-        messagebox.showerror("Error: File not found", "記録用のファイルがありません。\n再起動を行ってください。")
+        messagebox.showerror("Error: File not found", "記録用のファイルがありません。\nもう一度起動を行ってください。")
         sys.exit(0)
     
     # アクティブなシートを開く
@@ -458,6 +458,14 @@ def GApy(): #? 出席
                                 break
                 else:
                     # 名前が一致する行を探し、出席を記録
+                    for row in range(1, sheet.max_row + 1):
+                        if sheet.cell(row=row, column=1).value == name:
+                            sheet.cell(row=row, column=current_date.day + 9, value=AttendanceTime)
+                            workbook.save(ar_filename)
+                            
+                            conn.commit()  # 変更を確定
+                        
+                    # 名前が一致する行を探し、出席を記録
                     for row in range(1, temp_sheet.max_row + 1):
                         if temp_sheet.cell(row=row, column=1).value == name:
                             temp_sheet.cell(row=row, column=3, value=AttendanceTime)
@@ -497,28 +505,6 @@ def GApy(): #? 出席
             
             window.close()
             
-            start_row = 2
-            end_row = len(all_data) + 1
-            start_column = 3
-            end_column = 3
-            
-            # コピー先の開始セルの指定
-            dest_start_row = 2
-            dest_start_column = int(current_date_d) + 9 # 文字列を整数値に変換
-            
-            # 範囲をコピーしてコピー先のセルに貼り付ける
-            for row in range(start_row, end_row + 1):
-                for col in range(start_column, end_column + 1):
-                    cell_value = temp_sheet.cell(row=row, column=col).value
-                    dest_row = row - start_row + dest_start_row
-                    dest_col = col - start_column + dest_start_column
-                    dest_cell = sheet.cell(row=dest_row, column=dest_col)
-                    # セルの値をコピー
-                    dest_cell.value = cell_value
-            
-            
-            workbook.save(ar_filename)
-            
             #? 一時シート削除
             
             # 削除したいシート名を指定
@@ -531,8 +517,6 @@ def GApy(): #? 出席
             else:
                 logging.warning("Temporary sheet deletion failure.")
             
-            workbook.save(ar_filename)
-            
             # 時間変数の設定
             current_date = datetime.now()
             current_date_y = current_date.strftime("%Y")
@@ -540,16 +524,19 @@ def GApy(): #? 出席
             # 一時ファイル名
             ar_filename = f"{current_date_y}Attendance records.xlsx"
             
-            try:
-                workbook = load_workbook(ar_filename)
-            except FileNotFoundError:
-                exit_with_error("File not found")
+            # すべての行の3列目のセルが空白の場合「無断欠席」を記録
+            for row in range(2, sheet.max_row + 1):
+                # 各行の1列目の値が空白かどうかを一致するか確認
+                if sheet.cell(row=row, column=current_date.day + 9).value == None:
+                    # 一致した行に無断欠席を入力
+                    sheet.cell(row=row, column=current_date.day + 9, value="無断欠席")
+                    print("s")
             
             # 変更を保存する
             workbook.save(ar_filename)
             
             messagebox.showinfo('完了', '記録終了は正常に終了しました。')
-            window.close()
+            
             break
 
 def control_panel(): #? 管理画面
