@@ -221,7 +221,7 @@ def GApy(): #? 出席
             
             messagebox.showinfo("INFO", f"{lateness_time_hour}時{lateness_time_minute}分以降を遅刻として設定しました。")
             break
-        elif config_data['ManualLateTimeSetting']:
+        else:
             lateness_time = simpledialog.askstring('入力してください。', '何時以降を遅刻と設定しますか？\n（HH:MMの形式で入力してください）')
             
             if lateness_time == None:
@@ -497,66 +497,60 @@ def GApy(): #? 出席
             
             window.close()
             
-            # 警告メッセージ表示
-            endresult = messagebox.askquestion('警告', '本当に閉じますか？', icon='warning')
-            if endresult == 'yes': # yes
-                
-                start_row = 2
-                end_row = len(all_data) + 1
-                start_column = 3
-                end_column = 3
-                
-                # コピー先の開始セルの指定
-                dest_start_row = 2
-                dest_start_column = int(current_date_d) + 9 # 文字列を整数値に変換
-                
-                # 範囲をコピーしてコピー先のセルに貼り付ける
-                for row in range(start_row, end_row + 1):
-                    for col in range(start_column, end_column + 1):
-                        cell_value = temp_sheet.cell(row=row, column=col).value
-                        dest_row = row - start_row + dest_start_row
-                        dest_col = col - start_column + dest_start_column
-                        dest_cell = sheet.cell(row=dest_row, column=dest_col)
-                        # セルの値をコピー
-                        dest_cell.value = cell_value
-                
-                
-                workbook.save(ar_filename)
-                
-                #? 一時シート削除
-                
-                # 削除したいシート名を指定
-                sheet_name_to_delete = "temp"
-                
-                # シートを削除
-                if sheet_name_to_delete in workbook.sheetnames:
-                    sheet_to_delete = workbook[sheet_name_to_delete]
-                    workbook.remove(sheet_to_delete)
-                else:
-                    logging.warning("Temporary sheet deletion failure.")
-                
-                workbook.save(ar_filename)
-                
-                # 時間変数の設定
-                current_date = datetime.now()
-                current_date_y = current_date.strftime("%Y")
-                
-                # 一時ファイル名
-                ar_filename = f"{current_date_y}Attendance records.xlsx"
-                
-                try:
-                    workbook = load_workbook(ar_filename)
-                except FileNotFoundError:
-                    exit_with_error("File not found")
-                
-                # 変更を保存する
-                workbook.save(ar_filename)
-                
-                messagebox.showinfo('完了', '記録終了は正常に終了しました。')
-                window.close()
-                break
+            start_row = 2
+            end_row = len(all_data) + 1
+            start_column = 3
+            end_column = 3
+            
+            # コピー先の開始セルの指定
+            dest_start_row = 2
+            dest_start_column = int(current_date_d) + 9 # 文字列を整数値に変換
+            
+            # 範囲をコピーしてコピー先のセルに貼り付ける
+            for row in range(start_row, end_row + 1):
+                for col in range(start_column, end_column + 1):
+                    cell_value = temp_sheet.cell(row=row, column=col).value
+                    dest_row = row - start_row + dest_start_row
+                    dest_col = col - start_column + dest_start_column
+                    dest_cell = sheet.cell(row=dest_row, column=dest_col)
+                    # セルの値をコピー
+                    dest_cell.value = cell_value
+            
+            
+            workbook.save(ar_filename)
+            
+            #? 一時シート削除
+            
+            # 削除したいシート名を指定
+            sheet_name_to_delete = "temp"
+            
+            # シートを削除
+            if sheet_name_to_delete in workbook.sheetnames:
+                sheet_to_delete = workbook[sheet_name_to_delete]
+                workbook.remove(sheet_to_delete)
             else:
-                continue
+                logging.warning("Temporary sheet deletion failure.")
+            
+            workbook.save(ar_filename)
+            
+            # 時間変数の設定
+            current_date = datetime.now()
+            current_date_y = current_date.strftime("%Y")
+            
+            # 一時ファイル名
+            ar_filename = f"{current_date_y}Attendance records.xlsx"
+            
+            try:
+                workbook = load_workbook(ar_filename)
+            except FileNotFoundError:
+                exit_with_error("File not found")
+            
+            # 変更を保存する
+            workbook.save(ar_filename)
+            
+            messagebox.showinfo('完了', '記録終了は正常に終了しました。')
+            window.close()
+            break
 
 def control_panel(): #? 管理画面
     
@@ -569,7 +563,7 @@ def control_panel(): #? 管理画面
             
             Late_agitation = config_data['LateAgitation']
             Automatic_late_time_setting = config_data['AutomaticLateTimeSetting']
-            Manual_late_time_setting = config_data['ManualLateTimeSetting']
+            Manual_late_time_setting = not Automatic_late_time_setting
             Lateness_Time = config_data['Lateness_time']
             NameEntryAllowed = config_data['NameEntryAllowed']
             
@@ -583,7 +577,7 @@ def control_panel(): #? 管理画面
                     sg.Checkbox('時間を手動で入力する。', default=Manual_late_time_setting, key='-ManualLateTimeSetting-', enable_events=True)
                 ],
                 [sg.Text('自動設定の場合の X を決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey', enable_events=True)],
-                [sg.Checkbox('名前入力を許可する。', default=NameEntryAllowed, key='-NameEntryAllowed-', enable_events=True), sg.Text('memo:不許可にすると名前による出席が拒否されます。')], 
+                [sg.Checkbox('名前入力を許可する。', default=NameEntryAllowed, key='-NameEntryAllowed-', enable_events=True), sg.Text('hint:不許可にすると名前による出席が拒否されます。')], 
                 [sg.Button('戻る')]
             ]
             
@@ -626,7 +620,6 @@ def control_panel(): #? 管理画面
                         
                         # config変更
                         config_data["AutomaticLateTimeSetting"] = True
-                        config_data["ManualLateTimeSetting"] = False
                 
                 elif event == '-ManualLateTimeSetting-':
                     if values['-ManualLateTimeSetting-']:
@@ -637,7 +630,6 @@ def control_panel(): #? 管理画面
                         
                         # config変更
                         config_data["AutomaticLateTimeSetting"] = False
-                        config_data["ManualLateTimeSetting"] = True
                 
                 if event == '-NameEntryAllowed-':
                     if values['-NameEntryAllowed-']:

@@ -4,6 +4,5 @@
     "Lateness_time": 15,
     "LateAgitation": false,
     "AutomaticLateTimeSetting": true,
-    "ManualLateTimeSetting": false,
     "NameEntryAllowed": true
 }
