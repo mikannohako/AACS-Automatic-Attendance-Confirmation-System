@@ -8,7 +8,6 @@
 ■　主な機能
 
 ・出欠をExcelファイルに記録
-・Excelの出席、欠席を色分け
 
 --------------------
 ■　動作環境
@@ -26,7 +25,7 @@
 --------------------
 ■　アップデート
 
-・起動時に自動的に更新されます。
+・更新が必要な場合は起動時に自動的に更新案内が出ます。
 
 アップデート用のファイルはGithubにあります。
 URL: https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases

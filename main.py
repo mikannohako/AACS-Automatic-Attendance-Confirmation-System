@@ -17,6 +17,31 @@ import logging
 import hashlib
 import requests
 import webbrowser
+import msvcrt
+import tempfile
+
+#? tkinterのダイアログボックスを常時最前面に表示
+
+root = tk.Tk()
+root.attributes('-topmost', True)
+root.withdraw()
+
+#? 重複起動禁止関係
+
+# 一時ディレクトリにロックファイルを作成
+lock_file_path = os.path.join(tempfile.gettempdir(), 'main.lock')
+
+try:
+    # ロックファイルを開く
+    lock_file = open(lock_file_path, 'w')
+    
+    # ロックを取得する
+    msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+except IOError:
+    # ロック取得に失敗した場合は他のインスタンスが実行中
+    messagebox.showerror("Error", "複数同時起動はできません。")
+    
+    sys.exit(1)
 
 BAR_MAX = 70
 
@@ -52,7 +77,17 @@ window['-PROG-'].update(20)
 def exit_with_error(message): #? エラー時の処理
     logging.critical(f"{message}")
     messagebox.showerror("Error", f"エラーが発生しました。\n{message}")
-    sys.exit(1)  # アプリケーションをエラーコード 1 で終了します
+    
+    #? 重複起動関係
+        
+    # ロックを解放する
+    msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+    # ロックファイルを閉じる
+    lock_file.close()
+    # ロックファイルを削除する
+    os.remove(lock_file_path)
+    
+    sys.exit(1)
 
 def update(): #? アップデート
     
@@ -83,6 +118,15 @@ def update(): #? アップデート
                     
                     url = 'https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest'
                     webbrowser.open(url)
+                    
+                    #? 重複起動関係
+
+                    # ロックを解放する
+                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+                    # ロックファイルを閉じる
+                    lock_file.close()
+                    # ロックファイルを削除する
+                    os.remove(lock_file_path)
                     
                     sys.exit(0)
     
@@ -260,6 +304,16 @@ def GApy(): #? 出席
         workbook = load_workbook(ar_filename)
     except FileNotFoundError:
         messagebox.showerror("Error: File not found", "記録用のファイルがありません。\nもう一度起動を行ってください。")
+        
+        #? 重複起動関係
+        
+        # ロックを解放する
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+        # ロックファイルを閉じる
+        lock_file.close()
+        # ロックファイルを削除する
+        os.remove(lock_file_path)
+        
         sys.exit(0)
     
     # アクティブなシートを開く
@@ -348,7 +402,7 @@ def GApy(): #? 出席
         
         left_column = [
             [sg.Text(information, font=("Helvetica", 40))],
-            [sg.Text('苗字を入力してください。', key="-INPUT-", font=("Helvetica", 15))],
+            [sg.Text('名前またはIDを入力してください。', key="-INPUT-", font=("Helvetica", 15))],
             [sg.InputText(key="-NAME-", font=("Helvetica", 15))],
             [sg.Button('OK', bind_return_key=True, font=("Helvetica", 15)),
                 sg.Button('終了', bind_return_key=True, font=("Helvetica", 15)),
@@ -475,20 +529,6 @@ def GApy(): #? 出席
                             window["-NAME-"].update("")  # 入力フィールドをクリア
                             conn.commit()  # 変更を確定
                             
-                            if info == "遅刻" and config_data['LateAgitation']:
-                                reason = sg.popup_get_text('遅刻した理由を答えてください。')
-                                
-                                # 遅刻シートが存在しない場合は作成する
-                                if "遅刻理由" not in workbook.sheetnames:
-                                    workbook.create_sheet("遅刻理由")
-                                # 遅刻シートをアクティブにする
-                                lateness_sheet = workbook["遅刻理由"]
-                                
-                                # 最後の行を取得
-                                last_row = lateness_sheet.max_row
-                                lateness_sheet.cell(row=last_row + 1, column=1, value=reason)
-                            
-                            
                             window.close()
                             window = mainwindowshow()
                             break
@@ -530,7 +570,6 @@ def GApy(): #? 出席
                 if sheet.cell(row=row, column=current_date.day + 9).value == None:
                     # 一致した行に無断欠席を入力
                     sheet.cell(row=row, column=current_date.day + 9, value="無断欠席")
-                    print("s")
             
             # 変更を保存する
             workbook.save(ar_filename)
@@ -548,7 +587,6 @@ def control_panel(): #? 管理画面
         
         while True:
             
-            Late_agitation = config_data['LateAgitation']
             Automatic_late_time_setting = config_data['AutomaticLateTimeSetting']
             Manual_late_time_setting = not Automatic_late_time_setting
             Lateness_Time = config_data['Lateness_time']
@@ -557,8 +595,7 @@ def control_panel(): #? 管理画面
             # レイアウトの定義
             layout = [
                 [sg.Text('変更したい設定だけ変更してください。')],
-                [sg.Text('遅刻時の質問')],
-                [sg.Checkbox('遅刻時の煽り', default=Late_agitation, key='-LateAgitation-', enable_events=True),],
+                [sg.Text('遅刻時間')],
                 [
                     sg.Checkbox('起動時の時間 + X 分後に自動的に決める。', default=Automatic_late_time_setting, key='-AutomaticLateTimeSetting-', enable_events=True),
                     sg.Checkbox('時間を手動で入力する。', default=Manual_late_time_setting, key='-ManualLateTimeSetting-', enable_events=True)
@@ -575,8 +612,6 @@ def control_panel(): #? 管理画面
             while True:
                 event, values = window.read()
                 
-                Late_agitation = config_data['LateAgitation']
-                
                 Lateness_Time = values['-LatenessTime-']
                 
                 if event == sg.WINDOW_CLOSED or event == '戻る': # 終了
@@ -591,12 +626,6 @@ def control_panel(): #? 管理画面
                     json_save()
                     
                     return
-                
-                if event == '-LateAgitation-': # 遅刻時の煽り
-                    if values['-Late_agitation-']:
-                        config_data["LateAgitation"] = True
-                    else:
-                        config_data["LateAgitation"] = False
                 
                 if event == '-AutomaticLateTimeSetting-':
                     if values['-AutomaticLateTimeSetting-']:
@@ -645,11 +674,11 @@ def control_panel(): #? 管理画面
                         logging.info(f"パスワードが変更されました。ハッシュ値: {hashed_password}")
                         messagebox.showinfo("成功", "パスワードの変更に成功しました。")
                     except:
-                        messagebox.showinfo("失敗", "パスワードの変更に失敗しました。")
+                        messagebox.showwarning("失敗", "パスワードの変更に失敗しました。")
                 else:
-                    messagebox.showinfo("失敗", "パスワードの再入力に失敗しました。")
+                    messagebox.showwarning("失敗", "パスワードの再入力に失敗しました。")
             else:
-                messagebox.showinfo("失敗", "パスワードの認証に失敗しました。")
+                messagebox.showwarning("失敗", "パスワードの認証に失敗しました。")
     
     #? 管理画面
     
@@ -756,6 +785,16 @@ while True:  #? 無限ループ
         # JSONデータを保存
         with open('config.json', 'w') as f:
             json.dump(config_data, f, indent=4)
+        
+        #? 重複起動関係
+        
+        # ロックを解放する
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+        # ロックファイルを閉じる
+        lock_file.close()
+        # ロックファイルを削除する
+        os.remove(lock_file_path)
+        
         sys.exit(0)
     
     if event == '記録':
@@ -774,4 +813,4 @@ while True:  #? 無限ループ
             if config_data["passPhrase"] == hashed_password:
                 control_panel()
             else:
-                messagebox.showerror("ERROR", "パスワードが間違っています。")
+                messagebox.showwarning("失敗", "パスワードが間違っています。")

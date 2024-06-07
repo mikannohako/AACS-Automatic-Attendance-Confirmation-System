@@ -32,6 +32,8 @@
                 "askboolean",
                 "LATEAGITATION",
                 "levelname",
-                "IFERROR"
+                "IFERROR",
+                "LK_UNLCK",
+                "LK_NBLCK"
         ]
 }
