@@ -31,6 +31,9 @@
                 "COUNTIF",
                 "askboolean",
                 "LATEAGITATION",
-                "levelname"
+                "levelname",
+                "IFERROR",
+                "LK_UNLCK",
+                "LK_NBLCK"
         ]
 }
