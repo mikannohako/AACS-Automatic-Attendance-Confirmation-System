@@ -41,3 +41,4 @@ URL: https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-Syste
 
 1. 「AACS.exe」を実行してください。
 2. メニュー画面が出るので使用する機能を選んでください
+test
