@@ -53,7 +53,9 @@ Python初心者が練習などのために作ったソフトです。
 - sqlite3
 - time
 - json
-- tkinter (およびそのサブモジュール)
+- tkinter
+  - simpledialog
+  - messagebox
 - logging
 - hashlib
 - tempfile
