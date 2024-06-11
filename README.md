@@ -45,7 +45,7 @@ Python初心者が練習などのために作ったソフトです。
 - openpyxl
 - requests
 
-#### Python標準ライブラリ
+#### 標準ライブラリ
 
 - sys
 - os
