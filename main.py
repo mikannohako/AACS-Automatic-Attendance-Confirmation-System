@@ -1,5 +1,5 @@
 
-#? インポート
+#? 各ライブラリのインポート
 import PySimpleGUI as sg
 import sys
 import os
@@ -27,6 +27,12 @@ root.attributes('-topmost', True)
 root.withdraw()
 
 #? 重複起動禁止関係
+
+'''
+一時ディレクトリにロックファイルを作成して
+そのロックファイルが存在しているときは起動不可、存在しないときは起動可能と分ける
+問題点はソフトが異常終了した場合ロックファイルが残って起動ができなくなる。
+'''
 
 # 一時ディレクトリにロックファイルを作成
 lock_file_path = os.path.join(tempfile.gettempdir(), 'main.lock')
@@ -138,7 +144,7 @@ def json_save(): #? JSONデータを保存
     with open('config.json', 'w') as f:
         json.dump(config_data, f, indent=4)
 
-def SApy(): #? 記録ファイル作成
+def record_file_creation(): #? 記録ファイル作成
     # 月ごとのシートを作成する関数
     def create_month_sheet(workbook, month):
         sheet_name = month
@@ -225,7 +231,7 @@ def SApy(): #? 記録ファイル作成
     workbook.save(f"{current_date_y}Attendance records.xlsx")
     logging.info("記録用ファイルが作成されました。")
 
-def GApy(): #? 出席
+def main(): #? メイン
     #? config設定
     
     # 時間変数の設定
@@ -316,9 +322,11 @@ def GApy(): #? 出席
         
         sys.exit(0)
     
+    current_date = datetime.now()
+    
     # アクティブなシートを開く
     temp_sheet = workbook.create_sheet("temp")  
-    day_int = int(current_date_m)
+    day_int = current_date.hour
     sheet = workbook[f"{day_int}月"]
     
     # 項目の作成
@@ -760,7 +768,7 @@ ar_filename = f"{current_date_y}Attendance records.xlsx"
 # ファイルが存在するかチェック
 if not os.path.exists(ar_filename):
     # ファイルが存在しない場合の処理
-    SApy()
+    record_file_creation()
 
 window['-PROG-'].update(70)
 
@@ -799,7 +807,7 @@ while True:  #? 無限ループ
     
     if event == '記録':
         menu.close()
-        GApy()
+        main()
     
     if event == '管理画面':
         menu.close()
