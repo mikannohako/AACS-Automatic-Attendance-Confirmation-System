@@ -174,7 +174,9 @@ def SApy(): #? 記録ファイル作成
     
     # 日付データを入力する関数
     def input_date_data(sheet, month):
-        days_in_month = 30 if month in ["04", "06", "09", "11"] else 31 if month != "02" else 29  # 月ごとの日数
+        # 月ごとの日数を格納
+        days_in_month = 30 if month in ["04", "06", "09", "11"] else 31 if month != "02" else 29
+        # 
         for day in range(1, days_in_month + 1):
             sheet.cell(row=1, column=day + 9).value = day
         # 学年の列を追加
