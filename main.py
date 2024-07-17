@@ -28,6 +28,13 @@ root.withdraw()
 
 #? 重複起動禁止関係
 
+'''
+一時ディレクトリにロックファイルを作成して
+ロックファイルが存在してたら起動不可、存在してなかったら起動可能。
+問題点は異常終了した場合にロックファイルが消されなくて次回起動できなくなるのと
+終了時に毎回削除の関数を置かなくちゃいけなくなること。
+'''
+
 # 一時ディレクトリにロックファイルを作成
 lock_file_path = os.path.join(tempfile.gettempdir(), 'main.lock')
 
@@ -40,23 +47,28 @@ try:
 except IOError:
     # ロック取得に失敗した場合は他のインスタンスが実行中
     messagebox.showerror("Error", "複数同時起動はできません。")
-    
+
+    # エラーで終了
     sys.exit(1)
 
+# 起動用のプログレスバーの最大値を代入
 BAR_MAX = 70
 
+# プログレスバーのUIを作成
 layout = [
     [sg.Text('起動中')],
     [sg.ProgressBar(BAR_MAX, orientation='h', size=(20, 20), key='-PROG-')],
     ]
 
+# 作ったUIを表示
 window = sg.Window('起動中', layout, keep_on_top=True)
 
-# ここでウィンドウを初期化
+# ウィンドウを初期化
 event, values = window.read(timeout=0)
 if event == sg.WINDOW_CLOSED:
     window.close()
 
+# プログレスバーの値を10に設定
 window['-PROG-'].update(10)
 
 #? ログの設定
@@ -70,12 +82,15 @@ fmt = "%(asctime)s - %(levelname)s - %(message)s - %(module)s - %(funcName)s - %
 # ログの出力レベルを設定
 logging.basicConfig(filename=filename, encoding='utf-8', level=logging.INFO, format=fmt)
 
+# プログレスバーの値を20に設定
 window['-PROG-'].update(20)
 
 #? 各機能の関数
 
-def exit_with_error(message): #? エラー時の処理
+def exit_with_error(message): #? エラー時の処理用関数
+    # ログのメッセージを作成
     logging.critical(f"{message}")
+    # エラーダイアログボックスを表示
     messagebox.showerror("Error", f"エラーが発生しました。\n{message}")
     
     #? 重複起動関係
@@ -90,37 +105,45 @@ def exit_with_error(message): #? エラー時の処理
     sys.exit(1)
 
 def update(): #? アップデート
-    
-    def check_internet_connection():
+
+    def check_internet_connection(): # ネットにつながっているか確認
         try:
+            # Googleに接続
             response = requests.get("http://www.google.com", timeout=5)
-            response.raise_for_status()  # HTTPエラーコードが返ってきた場合に例外を発生させる
+            # HTTPエラーコードが返ってきた場合に例外を発生させる。
+            response.raise_for_status()
             
             return True
-        except requests.RequestException as e:
+        except requests.RequestException as e: # 接続時に例外が発生した場合の処理
             logging.warning("インターネット接続の確立に失敗しました。:", e)
             return False
     
-    def update_check():
+    def update_check(): # 最新バージョンがリリースされているかを確認
+        # 接続用のURLを格納
         api_url = f"https://api.github.com/repos/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest"
         
         # 最新のリリース情報を取得
         response = requests.get(api_url)
+        # HTTPリクエストのレスポンスステータスコードが200（成功）になっているかを確認
         if response.status_code == 200:
+            # 帰ってきた情報をjson形式でパースして変数に格納
             release_info = response.json()
-            # バージョン取得
+            
+            # パースされたjsonデータからバージョン情報を取得して変数に格納
             tag_name = release_info["tag_name"]
+            
+            # 不要な文字を取り除いて整数にして格納
             tag_name_int = int(tag_name.replace("v", "").replace(".", ""))
             
-            if config_data["version"] < tag_name_int:
-                if messagebox.askyesno("更新", "新しいバージョンがリリースされています。\n更新してください。"):
-                    # 最新のバージョンをダウンロードする
+            if config_data["version"] < tag_name_int: # コンフィグデータから現在バージョンを取得して最新バージョンより小さいかを確認
+                if messagebox.askyesno("更新", "新しいバージョンがリリースされています。\n更新してください。"): # 更新するかを確認
                     
+                    # 最新のバージョンのリリースブラウザで開く
                     url = 'https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest'
                     webbrowser.open(url)
                     
-                    #? 重複起動関係
-
+                    #? 終了
+                    
                     # ロックを解放する
                     msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
                     # ロックファイルを閉じる
@@ -130,11 +153,11 @@ def update(): #? アップデート
                     
                     sys.exit(0)
     
-    if check_internet_connection():
+    if check_internet_connection(): # ネット接続を確認したらupdate_check関数を実行
         update_check()
 
 def json_save(): #? JSONデータを保存
-    #
+    # jsonファイルをindent=4で保存
     with open('config.json', 'w') as f:
         json.dump(config_data, f, indent=4)
 
