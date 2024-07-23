@@ -37,6 +37,8 @@
                 "LK_NBLCK",
                 "tkinter",
                 "tempfile",
-                "hashlib"
+                "hashlib",
+                "messagebox",
+                "simpledialog"
         ]
 }

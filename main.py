@@ -115,24 +115,24 @@ def update(): #? アップデート
             
             return True
         except requests.RequestException as e: # 接続時に例外が発生した場合の処理
-            logging.warning("インターネット接続の確立に失敗しました。:", e)
+            logging.warning("インターネット接続の確立に失敗しました。: %s", e)
             return False
     
     def update_check(): # 最新バージョンがリリースされているかを確認
-        # 接続用のURLを格納
+        # 接続用のURLを代入
         api_url = f"https://api.github.com/repos/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest"
         
         # 最新のリリース情報を取得
         response = requests.get(api_url)
         # HTTPリクエストのレスポンスステータスコードが200（成功）になっているかを確認
         if response.status_code == 200:
-            # 帰ってきた情報をjson形式でパースして変数に格納
+            # 帰ってきた情報をjson形式でパースして変数に代入
             release_info = response.json()
             
             # パースされたjsonデータからバージョン情報を取得して変数に格納
             tag_name = release_info["tag_name"]
             
-            # 不要な文字を取り除いて整数にして格納
+            # 不要な文字を取り除いて整数にして代入
             tag_name_int = int(tag_name.replace("v", "").replace(".", ""))
             
             if config_data["version"] < tag_name_int: # コンフィグデータから現在バージョンを取得して最新バージョンより小さいかを確認
@@ -161,7 +161,7 @@ def json_save(): #? JSONデータを保存
     with open('config.json', 'w') as f:
         json.dump(config_data, f, indent=4)
 
-def SApy(): #? 記録ファイル作成
+def record_file_creation(): #? 記録ファイル作成
     # 月ごとのシートを作成する関数
     def create_month_sheet(workbook, month):
         sheet_name = month
@@ -174,7 +174,7 @@ def SApy(): #? 記録ファイル作成
     
     # 日付データを入力する関数
     def input_date_data(sheet, month):
-        # 月ごとの日数を格納
+        # 月ごとの日数を代入
         days_in_month = 30 if month in ["04", "06", "09", "11"] else 31 if month != "02" else 29
         # 
         for day in range(1, days_in_month + 1):
@@ -250,7 +250,7 @@ def SApy(): #? 記録ファイル作成
     workbook.save(f"{current_date_y}Attendance records.xlsx")
     logging.info("記録用ファイルが作成されました。")
 
-def GApy(): #? 出席
+def record(): #? 出席
     #? config設定
     
     # 時間変数の設定
@@ -280,17 +280,26 @@ def GApy(): #? 出席
     while True:
         
         if config_data["AutomaticLateTimeSetting"]:
+            # 時間の設定が自動になっている場合
+            
+            # 各変数に現在の時間を代入
             lateness_time_hour = current_date.hour
             lateness_time_minute = current_date.minute
+            # 設定されている時間分分を足す
             lateness_time_minute = lateness_time_minute + config_data['Lateness_time']
             
+            # 分が60以上だったら時間を一足して分から60引く
             if lateness_time_minute >= 60:
                 lateness_time_minute = lateness_time_minute - 60
                 lateness_time_hour = lateness_time_hour + 1
             
+            # 確認メッセージボックス
             messagebox.showinfo("INFO", f"{lateness_time_hour}時{lateness_time_minute}分以降を遅刻として設定しました。")
             break
         else:
+            # 時間の設定が手動になっている場合
+            
+            # 時間の設定の入力を求める
             lateness_time = simpledialog.askstring('入力してください。', '何時以降を遅刻と設定しますか？\n（HH:MMの形式で入力してください）')
             
             if lateness_time == None:
@@ -466,7 +475,7 @@ def GApy(): #? 出席
             return "出席処理されていない名前"  # IDに対応する名前が見つからない場合は特定の値を返す
     
     
-    window = mainwindowshow()  # mainwindowshow()関数を呼び出して、window変数に格納する
+    window = mainwindowshow()  # mainwindowshow()関数を呼び出して、window変数に代入する
     
     while True: #? 無限ループ
         # イベントとデータの読み込み
@@ -785,7 +794,7 @@ ar_filename = f"{current_date_y}Attendance records.xlsx"
 # ファイルが存在するかチェック
 if not os.path.exists(ar_filename):
     # ファイルが存在しない場合の処理
-    SApy()
+    record_file_creation()
 
 window['-PROG-'].update(70)
 
@@ -824,7 +833,7 @@ while True:  #? 無限ループ
     
     if event == '記録':
         menu.close()
-        GApy()
+        record()
     
     if event == '管理画面':
         menu.close()
