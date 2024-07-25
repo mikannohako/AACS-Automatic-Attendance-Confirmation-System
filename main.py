@@ -763,6 +763,8 @@ root.focus_force()
 window['-PROG-'].update(40)
 
 #? ファイルの存在確認
+
+# configファイル
 if not os.path.exists("config.json"):
     exit_with_error("config.json file not found.")
 
@@ -770,6 +772,18 @@ if not os.path.exists("Register.db"):
     exit_with_error("Register.db file not found.")
 
 window['-PROG-'].update(50)
+
+# 記録ファイル
+current_date = datetime.now()
+current_date_y = current_date.strftime("%Y")
+
+ar_filename = f"{current_date_y}Attendance records.xlsx"
+
+if not os.path.exists(ar_filename):
+    # ファイルが存在しない場合の処理
+    record_file_creation()
+
+window['-PROG-'].update(60)
 
 #? config読み込み
 
@@ -780,25 +794,12 @@ config_file_path = 'config.json'
 with open(config_file_path, 'r') as config_file:
     config_data = json.load(config_file)
 
-window['-PROG-'].update(60)
-
-#? ファイルチェック
-
-# 時間変数の設定
-current_date = datetime.now()
-current_date_y = current_date.strftime("%Y")
-
-# 記録ファイル名
-ar_filename = f"{current_date_y}Attendance records.xlsx"
-
-# ファイルが存在するかチェック
-if not os.path.exists(ar_filename):
-    # ファイルが存在しない場合の処理
-    record_file_creation()
-
 window['-PROG-'].update(70)
 
 window.close()
+
+#? メイン
+
 update()
 
 while True:  #? 無限ループ
