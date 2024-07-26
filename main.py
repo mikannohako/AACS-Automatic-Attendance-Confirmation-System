@@ -271,9 +271,6 @@ def record(): #? 出席
     
     name = None
     
-    # 記録ファイル名
-    ar_filename = f"{current_date_y}Attendance records.xlsx"
-    
     current_date = datetime.now()
     
     #? 遅刻時間の設定
@@ -332,6 +329,9 @@ def record(): #? 出席
                 return
     
     #? Excel初期設定
+    
+    # 記録ファイル名
+    ar_filename = f"{current_date_y}Attendance records.xlsx"
     
     # 新しいWorkbook（エクセルファイル）を作成して、ファイル名を指定
     try:
@@ -453,15 +453,6 @@ def record(): #? 出席
         window = sg.Window('出席処理', layout, finalize=True)
         window.Maximize()
         return window  # window変数を返す
-    
-    def get_id_by_name(input_name): #? 名前からIDを取得
-        # IDに対応するnameをクエリで検索
-        cursor.execute("SELECT ID FROM Register WHERE Name=?", (input_name,))
-        result = cursor.fetchone()  # 一致する最初の行を取得
-        if result:
-            return result[0]  # IDを返す
-        else:
-            return "IDに対応する名前が見つかりません"
     
     def get_name_by_id(id): #? IDから名前を取得
         
@@ -595,7 +586,7 @@ def record(): #? 出席
             current_date = datetime.now()
             current_date_y = current_date.strftime("%Y")
             
-            # 一時ファイル名
+            # 記録ファイル名
             ar_filename = f"{current_date_y}Attendance records.xlsx"
             
             # すべての行の3列目のセルが空白の場合「無断欠席」を記録
