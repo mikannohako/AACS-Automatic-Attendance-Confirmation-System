@@ -492,11 +492,10 @@ def record(): #? 出席
             name = values["-NAME-"]
             name_name = name
             
+            # 入力された名前をDBで検索
             cursor.execute("SELECT * FROM Register WHERE ID=?", (name,))
             result = cursor.fetchone()
             name = get_name_by_id(name)
-            
-            
             
             if not result:
                 if not config_data['NameEntryAllowed']:
@@ -510,7 +509,7 @@ def record(): #? 出席
                 result = cursor.fetchone()
             
             if result:
-                
+                # コンフィグの値を取得
                 absence_state = values['-ABSENCE-']
                 leave_early = values['-LEAVE_EARLY-']
                 
@@ -518,6 +517,8 @@ def record(): #? 出席
                 
                 AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                 info = "出席"
+                
+                # 状態を記録
                 
                 if absence_state and leave_early:
                     info = "error"
