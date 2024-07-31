@@ -104,6 +104,20 @@ def exit_with_error(message): #? エラー時の処理用関数
     
     sys.exit(1)
 
+def password_check():
+    user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
+    
+    if not user_pass == None:
+        # パスワードをUTF-8形式でエンコードしてハッシュ化
+        hashed_password = hashlib.sha256(user_pass.encode('utf-8')).hexdigest()
+        
+        if config_data["passPhrase"] == hashed_password:
+            messagebox.showinfo("成功", "パスワードの認証に成功しました。")
+            return True
+        else:
+            messagebox.showwarning("失敗", "パスワードが間違っています。")
+            return False
+
 def update(): #? アップデート
 
     def check_internet_connection(): # ネットにつながっているか確認
@@ -680,30 +694,22 @@ def control_panel(): #? 管理画面
 
     
     def password_change(): # パスワード変更
-        password = simpledialog.askstring("パスワード入力", "パスワードを入力してください")
         
-        if not password == None:
-            # パスワードをUTF-8形式でエンコードしてハッシュ化
-            hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
-            
-            if hashed_password == config_data['passPhrase']:
-                messagebox.showinfo("成功", "パスワードの認証に成功しました。")
-                new_passphrase = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください。')
-                new_passphrase_1 = simpledialog.askstring("再入力", "パスワードをもう一度入力してください。")
-                if new_passphrase_1 == new_passphrase:
-                    try:
-                        # パスワードをUTF-8形式でエンコードしてハッシュ化
-                        hashed_password = hashlib.sha256(new_passphrase.encode('utf-8')).hexdigest()
-                        config_data["passPhrase"] = hashed_password
-                        json_save()
-                        logging.info(f"パスワードが変更されました。ハッシュ値: {hashed_password}")
-                        messagebox.showinfo("成功", "パスワードの変更に成功しました。")
-                    except:
-                        messagebox.showwarning("失敗", "パスワードの変更に失敗しました。")
-                else:
-                    messagebox.showwarning("失敗", "パスワードの再入力に失敗しました。")
+        if password_check():
+            new_passphrase = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください。')
+            new_passphrase_1 = simpledialog.askstring("再入力", "パスワードをもう一度入力してください。")
+            if new_passphrase_1 == new_passphrase:
+                try:
+                    # パスワードをUTF-8形式でエンコードしてハッシュ化
+                    hashed_password = hashlib.sha256(new_passphrase.encode('utf-8')).hexdigest()
+                    config_data["passPhrase"] = hashed_password
+                    json_save()
+                    logging.info(f"パスワードが変更されました。ハッシュ値: {hashed_password}")
+                    messagebox.showinfo("成功", "パスワードの変更に成功しました。")
+                except:
+                    messagebox.showwarning("失敗", "パスワードの変更に失敗しました。")
             else:
-                messagebox.showwarning("失敗", "パスワードの認証に失敗しました。")
+                messagebox.showwarning("失敗", "パスワードの再入力に失敗しました。")
     
     #? 管理画面
     
@@ -830,13 +836,5 @@ while True:  #? 無限ループ
     if event == '管理画面':
         menu.close()
         tk.Tk().withdraw()
-        user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
-        
-        if not user_pass == None:
-            # パスワードをUTF-8形式でエンコードしてハッシュ化
-            hashed_password = hashlib.sha256(user_pass.encode('utf-8')).hexdigest()
-            
-            if config_data["passPhrase"] == hashed_password:
-                control_panel()
-            else:
-                messagebox.showwarning("失敗", "パスワードが間違っています。")
+        if password_check():
+            control_panel()
