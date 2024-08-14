@@ -30,8 +30,9 @@ root.withdraw()
 
 '''
 一時ディレクトリにロックファイルを作成して
-そのロックファイルが存在しているときは起動不可、存在しないときは起動可能と分ける
-問題点はソフトが異常終了した場合ロックファイルが残って起動ができなくなる。
+ロックファイルが存在してたら起動不可、存在してなかったら起動可能。
+問題点は異常終了した場合にロックファイルが消されなくて次回起動できなくなるのと
+終了時に毎回削除の関数を置かなくちゃいけなくなること。
 '''
 
 # 一時ディレクトリにロックファイルを作成
@@ -46,23 +47,28 @@ try:
 except IOError:
     # ロック取得に失敗した場合は他のインスタンスが実行中
     messagebox.showerror("Error", "複数同時起動はできません。")
-    
+
+    # エラーで終了
     sys.exit(1)
 
+# 起動用のプログレスバーの最大値を代入
 BAR_MAX = 70
 
+# プログレスバーのUIを作成
 layout = [
     [sg.Text('起動中')],
     [sg.ProgressBar(BAR_MAX, orientation='h', size=(20, 20), key='-PROG-')],
     ]
 
+# 作ったUIを表示
 window = sg.Window('起動中', layout, keep_on_top=True)
 
-# ここでウィンドウを初期化
+# ウィンドウを初期化
 event, values = window.read(timeout=0)
 if event == sg.WINDOW_CLOSED:
     window.close()
 
+# プログレスバーの値を10に設定
 window['-PROG-'].update(10)
 
 #? ログの設定
@@ -76,12 +82,15 @@ fmt = "%(asctime)s - %(levelname)s - %(message)s - %(module)s - %(funcName)s - %
 # ログの出力レベルを設定
 logging.basicConfig(filename=filename, encoding='utf-8', level=logging.INFO, format=fmt)
 
+# プログレスバーの値を20に設定
 window['-PROG-'].update(20)
 
 #? 各機能の関数
 
-def exit_with_error(message): #? エラー時の処理
+def exit_with_error(message): #? エラー時の処理用関数
+    # ログのメッセージを作成
     logging.critical(f"{message}")
+    # エラーダイアログボックスを表示
     messagebox.showerror("Error", f"エラーが発生しました。\n{message}")
     
     #? 重複起動関係
@@ -95,38 +104,60 @@ def exit_with_error(message): #? エラー時の処理
     
     sys.exit(1)
 
-def update(): #? アップデート
+def password_check():
+    user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
     
-    def check_internet_connection():
+    if not user_pass == None:
+        # パスワードをUTF-8形式でエンコードしてハッシュ化
+        hashed_password = hashlib.sha256(user_pass.encode('utf-8')).hexdigest()
+        
+        if config_data["passPhrase"] == hashed_password:
+            messagebox.showinfo("成功", "パスワードの認証に成功しました。")
+            return True
+        else:
+            messagebox.showwarning("失敗", "パスワードが間違っています。")
+            return False
+
+def update(): #? アップデート
+
+    def check_internet_connection(): # ネットにつながっているか確認
         try:
+            # Googleに接続
             response = requests.get("http://www.google.com", timeout=5)
-            response.raise_for_status()  # HTTPエラーコードが返ってきた場合に例外を発生させる
+            # HTTPエラーコードが返ってきた場合に例外を発生させる。
+            response.raise_for_status()
             
             return True
-        except requests.RequestException as e:
-            logging.warning("インターネット接続の確立に失敗しました。:", e)
+        except requests.RequestException as e: # 接続時に例外が発生した場合の処理
+            logging.warning("インターネット接続の確立に失敗しました。: %s", e)
             return False
     
-    def update_check():
+    def update_check(): # 最新バージョンがリリースされているかを確認
+        # 接続用のURLを代入
         api_url = f"https://api.github.com/repos/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest"
         
         # 最新のリリース情報を取得
         response = requests.get(api_url)
+        # HTTPリクエストのレスポンスステータスコードが200（成功）になっているかを確認
         if response.status_code == 200:
+            # 帰ってきた情報をjson形式でパースして変数に代入
             release_info = response.json()
-            # バージョン取得
+            
+            # パースされたjsonデータからバージョン情報を取得して変数に格納
             tag_name = release_info["tag_name"]
+            
+            # 不要な文字を取り除いて整数にして代入
             tag_name_int = int(tag_name.replace("v", "").replace(".", ""))
             
-            if config_data["version"] < tag_name_int:
-                if messagebox.askyesno("更新", "新しいバージョンがリリースされています。\n更新してください。"):
-                    # 最新のバージョンをダウンロードする
+            if config_data["version"] < tag_name_int: # コンフィグデータから現在バージョンを取得して最新バージョンより小さいかを確認
+                if messagebox.askyesno("更新", "新しいバージョンがリリースされています。\n更新してください。"): # 更新するかを確認
                     
+                    # 最新のバージョンのリリースブラウザで開く
                     url = 'https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest'
                     webbrowser.open(url)
                     
-                    #? 重複起動関係
-
+                    #? 終了
+                    
                     # ロックを解放する
                     msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
                     # ロックファイルを閉じる
@@ -136,11 +167,11 @@ def update(): #? アップデート
                     
                     sys.exit(0)
     
-    if check_internet_connection():
+    if check_internet_connection(): # ネット接続を確認したらupdate_check関数を実行
         update_check()
 
 def json_save(): #? JSONデータを保存
-    #
+    # jsonファイルをindent=4で保存
     with open('config.json', 'w') as f:
         json.dump(config_data, f, indent=4)
 
@@ -157,7 +188,9 @@ def record_file_creation(): #? 記録ファイル作成
     
     # 日付データを入力する関数
     def input_date_data(sheet, month):
-        days_in_month = 30 if month in ["04", "06", "09", "11"] else 31 if month != "02" else 29  # 月ごとの日数
+        # 月ごとの日数を代入
+        days_in_month = 30 if month in ["04", "06", "09", "11"] else 31 if month != "02" else 29
+        # 
         for day in range(1, days_in_month + 1):
             sheet.cell(row=1, column=day + 9).value = day
         # 学年の列を追加
@@ -231,7 +264,11 @@ def record_file_creation(): #? 記録ファイル作成
     workbook.save(f"{current_date_y}Attendance records.xlsx")
     logging.info("記録用ファイルが作成されました。")
 
+<<<<<<< HEAD
 def main(): #? メイン
+=======
+def record(): #? 出席
+>>>>>>> f8144c8c7f37d0b00a5ea49766d8cb91400f71ad
     #? config設定
     
     # 時間変数の設定
@@ -252,26 +289,32 @@ def main(): #? メイン
     
     name = None
     
-    # 記録ファイル名
-    ar_filename = f"{current_date_y}Attendance records.xlsx"
-    
     current_date = datetime.now()
     
     #? 遅刻時間の設定
     while True:
         
         if config_data["AutomaticLateTimeSetting"]:
+            # 時間の設定が自動になっている場合
+            
+            # 各変数に現在の時間を代入
             lateness_time_hour = current_date.hour
             lateness_time_minute = current_date.minute
+            # 設定されている時間分分を足す
             lateness_time_minute = lateness_time_minute + config_data['Lateness_time']
             
+            # 分が60以上だったら時間を一足して分から60引く
             if lateness_time_minute >= 60:
                 lateness_time_minute = lateness_time_minute - 60
                 lateness_time_hour = lateness_time_hour + 1
             
+            # 確認メッセージボックス
             messagebox.showinfo("INFO", f"{lateness_time_hour}時{lateness_time_minute}分以降を遅刻として設定しました。")
             break
         else:
+            # 時間の設定が手動になっている場合
+            
+            # 時間の設定の入力を求める
             lateness_time = simpledialog.askstring('入力してください。', '何時以降を遅刻と設定しますか？\n（HH:MMの形式で入力してください）')
             
             if lateness_time == None:
@@ -304,6 +347,9 @@ def main(): #? メイン
                 return
     
     #? Excel初期設定
+    
+    # 記録ファイル名
+    ar_filename = f"{current_date_y}Attendance records.xlsx"
     
     # 新しいWorkbook（エクセルファイル）を作成して、ファイル名を指定
     try:
@@ -428,15 +474,6 @@ def main(): #? メイン
         window.Maximize()
         return window  # window変数を返す
     
-    def get_id_by_name(input_name): #? 名前からIDを取得
-        # IDに対応するnameをクエリで検索
-        cursor.execute("SELECT ID FROM Register WHERE Name=?", (input_name,))
-        result = cursor.fetchone()  # 一致する最初の行を取得
-        if result:
-            return result[0]  # IDを返す
-        else:
-            return "IDに対応する名前が見つかりません"
-    
     def get_name_by_id(id): #? IDから名前を取得
         
         # IDに対応する名前を取得するSQLクエリを実行
@@ -449,7 +486,7 @@ def main(): #? メイン
             return "出席処理されていない名前"  # IDに対応する名前が見つからない場合は特定の値を返す
     
     
-    window = mainwindowshow()  # mainwindowshow()関数を呼び出して、window変数に格納する
+    window = mainwindowshow()  # mainwindowshow()関数を呼び出して、window変数に代入する
     
     while True: #? 無限ループ
         # イベントとデータの読み込み
@@ -461,11 +498,10 @@ def main(): #? メイン
             name = values["-NAME-"]
             name_name = name
             
+            # 入力された名前をDBで検索
             cursor.execute("SELECT * FROM Register WHERE ID=?", (name,))
             result = cursor.fetchone()
             name = get_name_by_id(name)
-            
-            
             
             if not result:
                 if not config_data['NameEntryAllowed']:
@@ -479,7 +515,7 @@ def main(): #? メイン
                 result = cursor.fetchone()
             
             if result:
-                
+                # コンフィグの値を取得
                 absence_state = values['-ABSENCE-']
                 leave_early = values['-LEAVE_EARLY-']
                 
@@ -487,6 +523,8 @@ def main(): #? メイン
                 
                 AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                 info = "出席"
+                
+                # 状態を記録
                 
                 if absence_state and leave_early:
                     info = "error"
@@ -569,7 +607,7 @@ def main(): #? メイン
             current_date = datetime.now()
             current_date_y = current_date.strftime("%Y")
             
-            # 一時ファイル名
+            # 記録ファイル名
             ar_filename = f"{current_date_y}Attendance records.xlsx"
             
             # すべての行の3列目のセルが空白の場合「無断欠席」を記録
@@ -663,30 +701,22 @@ def control_panel(): #? 管理画面
 
     
     def password_change(): # パスワード変更
-        password = simpledialog.askstring("パスワード入力", "パスワードを入力してください")
         
-        if not password == None:
-            # パスワードをUTF-8形式でエンコードしてハッシュ化
-            hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
-            
-            if hashed_password == config_data['passPhrase']:
-                messagebox.showinfo("成功", "パスワードの認証に成功しました。")
-                new_passphrase = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください。')
-                new_passphrase_1 = simpledialog.askstring("再入力", "パスワードをもう一度入力してください。")
-                if new_passphrase_1 == new_passphrase:
-                    try:
-                        # パスワードをUTF-8形式でエンコードしてハッシュ化
-                        hashed_password = hashlib.sha256(new_passphrase.encode('utf-8')).hexdigest()
-                        config_data["passPhrase"] = hashed_password
-                        json_save()
-                        logging.info(f"パスワードが変更されました。ハッシュ値: {hashed_password}")
-                        messagebox.showinfo("成功", "パスワードの変更に成功しました。")
-                    except:
-                        messagebox.showwarning("失敗", "パスワードの変更に失敗しました。")
-                else:
-                    messagebox.showwarning("失敗", "パスワードの再入力に失敗しました。")
+        if password_check():
+            new_passphrase = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください。')
+            new_passphrase_1 = simpledialog.askstring("再入力", "パスワードをもう一度入力してください。")
+            if new_passphrase_1 == new_passphrase:
+                try:
+                    # パスワードをUTF-8形式でエンコードしてハッシュ化
+                    hashed_password = hashlib.sha256(new_passphrase.encode('utf-8')).hexdigest()
+                    config_data["passPhrase"] = hashed_password
+                    json_save()
+                    logging.info(f"パスワードが変更されました。ハッシュ値: {hashed_password}")
+                    messagebox.showinfo("成功", "パスワードの変更に成功しました。")
+                except:
+                    messagebox.showwarning("失敗", "パスワードの変更に失敗しました。")
             else:
-                messagebox.showwarning("失敗", "パスワードの認証に失敗しました。")
+                messagebox.showwarning("失敗", "パスワードの再入力に失敗しました。")
     
     #? 管理画面
     
@@ -737,6 +767,8 @@ root.focus_force()
 window['-PROG-'].update(40)
 
 #? ファイルの存在確認
+
+# configファイル
 if not os.path.exists("config.json"):
     exit_with_error("config.json file not found.")
 
@@ -744,6 +776,18 @@ if not os.path.exists("Register.db"):
     exit_with_error("Register.db file not found.")
 
 window['-PROG-'].update(50)
+
+# 記録ファイル
+current_date = datetime.now()
+current_date_y = current_date.strftime("%Y")
+
+ar_filename = f"{current_date_y}Attendance records.xlsx"
+
+if not os.path.exists(ar_filename):
+    # ファイルが存在しない場合の処理
+    record_file_creation()
+
+window['-PROG-'].update(60)
 
 #? config読み込み
 
@@ -754,6 +798,7 @@ config_file_path = 'config.json'
 with open(config_file_path, 'r') as config_file:
     config_data = json.load(config_file)
 
+<<<<<<< HEAD
 window['-PROG-'].update(60)
 
 #? ファイルチェック
@@ -770,9 +815,14 @@ if not os.path.exists(ar_filename):
     # ファイルが存在しない場合の処理
     record_file_creation()
 
+=======
+>>>>>>> f8144c8c7f37d0b00a5ea49766d8cb91400f71ad
 window['-PROG-'].update(70)
 
 window.close()
+
+#? メイン
+
 update()
 
 while True:  #? 無限ループ
@@ -807,18 +857,14 @@ while True:  #? 無限ループ
     
     if event == '記録':
         menu.close()
+<<<<<<< HEAD
         main()
+=======
+        record()
+>>>>>>> f8144c8c7f37d0b00a5ea49766d8cb91400f71ad
     
     if event == '管理画面':
         menu.close()
         tk.Tk().withdraw()
-        user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
-        
-        if not user_pass == None:
-            # パスワードをUTF-8形式でエンコードしてハッシュ化
-            hashed_password = hashlib.sha256(user_pass.encode('utf-8')).hexdigest()
-            
-            if config_data["passPhrase"] == hashed_password:
-                control_panel()
-            else:
-                messagebox.showwarning("失敗", "パスワードが間違っています。")
+        if password_check():
+            control_panel()
