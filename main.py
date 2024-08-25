@@ -193,9 +193,9 @@ def record_file_creation(): #? 記録ファイル作成
         # 
         for day in range(1, days_in_month + 1):
             sheet.cell(row=1, column=day + 9).value = day
-        # 学年の列を追加
+        # 各列を追加
         sheet.cell(row=1, column=1).value = '名前'
-        sheet.cell(row=1, column=2).value = '学年'
+        sheet.cell(row=1, column=2).value = 'ID'
         sheet.cell(row=1, column=3).value = '出席率'
         sheet.cell(row=1, column=4).value = '全日数'
         sheet.cell(row=1, column=5).value = '出席'
@@ -212,10 +212,10 @@ def record_file_creation(): #? 記録ファイル作成
     cursor = conn.cursor()
     
     # すべてのデータを取得
-    cursor.execute('SELECT Name, GradeinSchool FROM Register')
+    cursor.execute('SELECT Name, DisplayID FROM Register')
     all_data = cursor.fetchall()
     
-    # 月ごとのシートを作成して名前と学年の行を追加
+    # 月ごとのシートを作成して名前とIDの行を追加
     for month in range(1, 13):
         month_str = str(month).zfill(2)  # 1桁の月を2桁の文字列に変換
         sheet = create_month_sheet(workbook, f"{month_str}月")
@@ -225,7 +225,7 @@ def record_file_creation(): #? 記録ファイル作成
         for data in all_data:
             row_number = sheet.max_row + 1
             sheet.cell(row=row_number, column=1, value=data[0])  # 名前
-            sheet.cell(row=row_number, column=2, value=data[1])  # 学年
+            sheet.cell(row=row_number, column=2, value=data[1])  # ID
             sheet.cell(row=row_number, column=3).value = f'=IFERROR( ( E{row_number} / D{row_number}) * 100, "No data")'
             sheet.cell(row=row_number, column=4).value = f'=COUNTIF(J{row_number}:BA{row_number}, "<>")'  # 全日数
             sheet.cell(row=row_number, column=5).value = f'=(COUNTIF(J{row_number}:BA{row_number}, "*出席*") + H{row_number} + I{row_number})'  # 出席
@@ -264,18 +264,13 @@ def record_file_creation(): #? 記録ファイル作成
     workbook.save(f"{current_date_y}Attendance records.xlsx")
     logging.info("記録用ファイルが作成されました。")
 
-<<<<<<< HEAD
-def main(): #? メイン
-=======
+
 def record(): #? 出席
->>>>>>> f8144c8c7f37d0b00a5ea49766d8cb91400f71ad
     #? config設定
     
     # 時間変数の設定
     current_date = datetime.now()
     current_date_y = current_date.strftime("%Y")
-    current_date_m = current_date.strftime("%m")
-    current_date_h = current_date.strftime("%h")
     current_date_d = current_date.strftime("%d")
     
     # 設定ファイルのパス
@@ -372,12 +367,12 @@ def record(): #? 出席
     
     # アクティブなシートを開く
     temp_sheet = workbook.create_sheet("temp")  
-    day_int = current_date.hour
+    day_int = current_date.month
     sheet = workbook[f"{day_int}月"]
     
     # 項目の作成
     temp_sheet['A1'] = '名前'
-    temp_sheet['B1'] = '学年'
+    temp_sheet['B1'] = 'ID'
     temp_sheet['C1'] = '出席状況'
     
     #? DB初期設定
@@ -389,7 +384,7 @@ def record(): #? 出席
     
     
     # すべてのデータを取得
-    cursor.execute('SELECT Name, GradeinSchool FROM Register')
+    cursor.execute('SELECT Name, DisplayID FROM Register')
     all_data = cursor.fetchall()
     
     #? 一時ファイルにDBを入力
@@ -398,7 +393,7 @@ def record(): #? 出席
     for data in all_data:
         row_number = temp_sheet.max_row + 1
         temp_sheet.cell(row=row_number, column=1, value=data[0])  # 名前
-        temp_sheet.cell(row=row_number, column=2, value=data[1])  # 学年
+        temp_sheet.cell(row=row_number, column=2, value=data[1])  # 表示ID
     
     
     start_row = 2
@@ -451,7 +446,7 @@ def record(): #? 出席
             else:
                 data.append(list(row))
         
-        header = ['名前', '学年', '出席状況']  # 各列のヘッダーを指定
+        header = ['名前', 'ID', '出席状況']  # 各列のヘッダーを指定
         
         
         left_column = [
@@ -798,25 +793,7 @@ config_file_path = 'config.json'
 with open(config_file_path, 'r') as config_file:
     config_data = json.load(config_file)
 
-<<<<<<< HEAD
-window['-PROG-'].update(60)
 
-#? ファイルチェック
-
-# 時間変数の設定
-current_date = datetime.now()
-current_date_y = current_date.strftime("%Y")
-
-# 記録ファイル名
-ar_filename = f"{current_date_y}Attendance records.xlsx"
-
-# ファイルが存在するかチェック
-if not os.path.exists(ar_filename):
-    # ファイルが存在しない場合の処理
-    record_file_creation()
-
-=======
->>>>>>> f8144c8c7f37d0b00a5ea49766d8cb91400f71ad
 window['-PROG-'].update(70)
 
 window.close()
@@ -857,11 +834,8 @@ while True:  #? 無限ループ
     
     if event == '記録':
         menu.close()
-<<<<<<< HEAD
-        main()
-=======
+
         record()
->>>>>>> f8144c8c7f37d0b00a5ea49766d8cb91400f71ad
     
     if event == '管理画面':
         menu.close()
