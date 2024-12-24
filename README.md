@@ -28,7 +28,6 @@ Python初心者が練習などのために作ったソフトです。
 - Excelに出力する出席処理
 - 出席率の記録
 - 出席率のファイル出力　（予定）
-- DBファイルの編集が簡単にできる　（予定）
 - 顔認証（いつかやる、、、かも？）
 
 ## 開発に関すること
@@ -50,7 +49,6 @@ Python初心者が練習などのために作ったソフトです。
 - sys
 - os
 - datetime
-- sqlite3
 - time
 - json
 - tkinter（及びそのサブモジュール）
@@ -67,7 +65,6 @@ Python初心者が練習などのために作ったソフトです。
 - [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
 - [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance)
 - [PySimpleGUI Snippets](https://marketplace.visualstudio.com/items?itemName=Acezx.pysimplegui-snippets)
-- [SQLite](https://marketplace.visualstudio.com/items?itemName=alexcvzz.vscode-sqlite)
 
 #### あるとコードが見やすくなる
 
