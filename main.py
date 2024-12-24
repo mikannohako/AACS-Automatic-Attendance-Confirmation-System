@@ -12,6 +12,7 @@ import sqlite3
 import openpyxl
 from openpyxl import load_workbook
 from openpyxl.worksheet.table import TableStyleInfo
+from openpyxl.worksheet.table import Table
 import json
 import logging
 import hashlib
@@ -118,6 +119,20 @@ def password_check():
             messagebox.showwarning("失敗", "パスワードが間違っています。")
             return False
 
+# 外部Excelファイルを読み込む
+def load_user_data(file_path):
+    # user_list.xlsxファイルを開く
+    workbook = openpyxl.load_workbook(file_path)
+    sheet = workbook["user_list"]  # user_listシートを指定
+    
+    # データを読み込む
+    all_data = []
+    for row in sheet.iter_rows(min_row=2, values_only=True):  # 1行目はヘッダーなので2行目から読み込む
+        user_id, user_name = row
+        all_data.append((user_name, user_id))  # 名前とIDをタプルで追加
+    
+    return all_data
+
 def update(): #? アップデート
 
     def check_internet_connection(): # ネットにつながっているか確認
@@ -175,95 +190,81 @@ def json_save(): #? JSONデータを保存
     with open('config.json', 'w') as f:
         json.dump(config_data, f, indent=4)
 
-def record_file_creation(): #? 記録ファイル作成
-    # 月ごとのシートを作成する関数
+import openpyxl
+from openpyxl.worksheet.table import Table, TableStyleInfo
+import logging
+from datetime import datetime
+
+# ログ設定
+logging.basicConfig(level=logging.INFO)
+
+def record_file_creation():  #? 記録ファイル作成
     def create_month_sheet(workbook, month):
         sheet_name = month
         if month.startswith("0"):
             sheet_name = month[1:]
         if sheet_name not in workbook.sheetnames:
             workbook.create_sheet(sheet_name)
-            # 作成したシートを返す
             return workbook[sheet_name]
-    
-    # 日付データを入力する関数
+
     def input_date_data(sheet, month):
-        # 月ごとの日数を代入
         days_in_month = 30 if month in ["04", "06", "09", "11"] else 31 if month != "02" else 29
-        # 
         for day in range(1, days_in_month + 1):
             sheet.cell(row=1, column=day + 9).value = day
-        # 各列を追加
-        sheet.cell(row=1, column=1).value = '名前'
-        sheet.cell(row=1, column=2).value = 'ID'
-        sheet.cell(row=1, column=3).value = '出席率'
-        sheet.cell(row=1, column=4).value = '全日数'
-        sheet.cell(row=1, column=5).value = '出席'
-        sheet.cell(row=1, column=6).value = '欠席'
-        sheet.cell(row=1, column=7).value = '無断欠席'
-        sheet.cell(row=1, column=8).value = '遅刻'
-        sheet.cell(row=1, column=9).value = '早退'
+        headers = ['名前', 'ID', '出席率', '全日数', '出席', '欠席', '無断欠席', '遅刻', '早退']
+        for col, header in enumerate(headers, start=1):
+            sheet.cell(row=1, column=col).value = header
+
+    # 現在の年を取得
+    current_date_y = datetime.now().year
     
-    # 新しいWorkbook（エクセルファイル）を作成して、ファイル名を指定
+    # ユーザーリストをロード
+    user_list_wb = openpyxl.load_workbook('user_list.xlsx')
+    user_list_sheet = user_list_wb['user_list']
+
+    # ユーザー情報を取得
+    all_data = [
+        (row[1], row[0])  # 名前, ID
+        for row in user_list_sheet.iter_rows(min_row=2, max_col=2, values_only=True)
+        if row[0] is not None and row[1] is not None  # 空の行を除外
+    ]
+
+    # 新しいWorkbook（エクセルファイル）を作成
     workbook = openpyxl.Workbook()
-    
-    # DBに接続する
-    conn = sqlite3.connect('Register.db')
-    cursor = conn.cursor()
-    
-    # すべてのデータを取得
-    cursor.execute('SELECT Name, DisplayID FROM Register')
-    all_data = cursor.fetchall()
-    
-    # 月ごとのシートを作成して名前とIDの行を追加
+
     for month in range(1, 13):
-        month_str = str(month).zfill(2)  # 1桁の月を2桁の文字列に変換
+        month_str = str(month).zfill(2)
         sheet = create_month_sheet(workbook, f"{month_str}月")
         input_date_data(sheet, month_str)
-        
-        # エクセルにすべてのデータを入力
+
         for data in all_data:
             row_number = sheet.max_row + 1
             sheet.cell(row=row_number, column=1, value=data[0])  # 名前
             sheet.cell(row=row_number, column=2, value=data[1])  # ID
-            sheet.cell(row=row_number, column=3).value = f'=IFERROR( ( E{row_number} / D{row_number}) * 100, "No data")'
+            sheet.cell(row=row_number, column=3).value = f'=IFERROR((E{row_number} / D{row_number}) * 100, "No data")'
             sheet.cell(row=row_number, column=4).value = f'=COUNTIF(J{row_number}:BA{row_number}, "<>")'  # 全日数
-            sheet.cell(row=row_number, column=5).value = f'=(COUNTIF(J{row_number}:BA{row_number}, "*出席*") + H{row_number} + I{row_number})'  # 出席
-            sheet.cell(row=row_number, column=6).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*欠席*")'  # 欠席
-            sheet.cell(row=row_number, column=7).value = f'=COUNTIF(J{row_number}:BA{row_number}, "無断欠席")'  # 無断欠席
-            sheet.cell(row=row_number, column=8).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*遅刻*")'  # 遅刻
-            sheet.cell(row=row_number, column=9).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*早退*")'  # 早退
+            sheet.cell(row=row_number, column=5).value = f'=(COUNTIF(J{row_number}:BA{row_number}, "*出席*") + H{row_number} + I{row_number})'
+            sheet.cell(row=row_number, column=6).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*欠席*")'
+            sheet.cell(row=row_number, column=7).value = f'=COUNTIF(J{row_number}:BA{row_number}, "無断欠席")'
+            sheet.cell(row=row_number, column=8).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*遅刻*")'
+            sheet.cell(row=row_number, column=9).value = f'=COUNTIF(J{row_number}:BA{row_number}, "*早退*")'
         
-        end_row = len(all_data) + 1 # データの数に基づいて終了行を決定する
-        table_range = f"A1:I{end_row}"  # 範囲を変数に格納する
-        table = openpyxl.worksheet.table.Table(displayName=f"Table{month}", ref=table_range)
+        end_row = len(all_data) + 1
+        table_range = f"A1:I{end_row}"
+        table = Table(displayName=f"Table{month}", ref=table_range)
         
-        # スタイル設定
         style = TableStyleInfo(
-            name="TableStyleMedium9",  # テーブルのスタイル名
-            showRowStripes=True,    # 行のストライプを表示する
+            name="TableStyleMedium9",
+            showRowStripes=True
         )
-        
-        # テーブルにスタイルを適用
         table.tableStyleInfo = style
-        
-        # シートにテーブルを追加
         sheet.add_table(table)
-    
-    # 削除したいシート名を指定
-    sheet_name_to_delete = "Sheet"
-    
-    # シートを削除
-    if sheet_name_to_delete in workbook.sheetnames:
-        sheet_to_delete = workbook[sheet_name_to_delete]
-        workbook.remove(sheet_to_delete)
-    else:
-        logging.warning("Temporary sheet deletion >>> undone")
-    
-    # エクセルファイルを保存
-    workbook.save(f"{current_date_y}Attendance records.xlsx")
-    logging.info("記録用ファイルが作成されました。")
 
+    if "Sheet" in workbook.sheetnames:
+        del workbook["Sheet"]
+
+    workbook.save(f"{current_date_y}Attendance_records.xlsx")
+    logging.info("記録用ファイルが作成されました。")
 
 def record(): #? 出席
     #? config設定
@@ -344,7 +345,7 @@ def record(): #? 出席
     #? Excel初期設定
     
     # 記録ファイル名
-    ar_filename = f"{current_date_y}Attendance records.xlsx"
+    ar_filename = f"{current_date_y}Attendance_records.xlsx"
     
     # 新しいWorkbook（エクセルファイル）を作成して、ファイル名を指定
     try:
@@ -375,37 +376,27 @@ def record(): #? 出席
     temp_sheet['B1'] = 'ID'
     temp_sheet['C1'] = '出席状況'
     
-    #? DB初期設定
-    
-    # DBに接続する
-    
-    conn = sqlite3.connect('Register.db')
-    cursor = conn.cursor()    
-    
-    
-    # すべてのデータを取得
-    cursor.execute('SELECT Name, DisplayID FROM Register')
-    all_data = cursor.fetchall()
-    
-    #? 一時ファイルにDBを入力
-    
     # エクセルにすべてのデータを入力
-    for data in all_data:
-        row_number = temp_sheet.max_row + 1
-        temp_sheet.cell(row=row_number, column=1, value=data[0])  # 名前
-        temp_sheet.cell(row=row_number, column=2, value=data[1])  # 表示ID
-    
-    
-    start_row = 2
-    end_row = len(all_data) + 1
-    start_column = int(current_date_d) + 9
-    end_column = int(current_date_d) + 9
-    
+    for row in sheet.iter_rows(min_row=2, values_only=True):  # 2行目以降のデータを取得
+        name = row[0]  # 名前
+        display_id = row[1]  # 表示ID
+        
+        # 一時シートにデータを追加
+        temp_sheet.append([name, display_id, None])  # 欠席状況の列は初めはNoneにしておく
+
+    # 現在の日付を取得
+    current_date_d = datetime.now().day  # 今日の日付（適宜変更）
+
+    # コピー範囲の設定
+    start_row = 2  # データの開始行
+    end_row = len(sheet['A'])  # 最後の行まで
+    start_column = current_date_d + 9  # 今日の日付に基づく開始列
+    end_column = start_column  # 1列のみコピーする
+
     # コピー先の開始セルの指定
     dest_start_row = 2
-    dest_start_column = 3 # 文字列を整数値に変換
-    
-    
+    dest_start_column = 3  # 欠席状況の列（適宜変更）
+
     # 範囲をコピーしてコピー先のセルに貼り付ける
     for row in range(start_row, end_row + 1):
         for col in range(start_column, end_column + 1):
@@ -413,21 +404,18 @@ def record(): #? 出席
             dest_row = row - start_row + dest_start_row
             dest_col = col - start_column + dest_start_column
             dest_cell = temp_sheet.cell(row=dest_row, column=dest_col)
-            # セルの値をコピー
             dest_cell.value = cell_value
-    
-    
-    #? 欠席と入力
-    end_row = len(all_data) + 1 # データの数に基づいて終了行を決定する
-    for row_number in range(2, end_row + 1): # 2からend_row + 1までの行数を繰り返し処理
-        # セルの値を取得
-        cell_value = temp_sheet.cell(row=row_number, column=3).value
-        # セルの値が空かどうかをチェック
-        if cell_value is None or cell_value == "":
-            temp_sheet.cell(row=row_number, column=3, value='無断欠席') # 初めは無断欠席として設定
-    
+
+    # 欠席と入力
+    end_row = len(temp_sheet['A']) + 1  # データの数に基づいて終了行を決定する
+    for row_number in range(2, end_row + 1):
+        cell_value = temp_sheet.cell(row=row_number, column=3).value  # 欠席状況の列を取得
+        if cell_value is None or cell_value == "":  # 空白またはNoneの場合
+            temp_sheet.cell(row=row_number, column=3, value='無断欠席')  # 初めは無断欠席として設定
+
     # 保存
-    workbook.save(ar_filename)
+    ar_filename = f"{current_date_y}Attendance_records.xlsx"  # 保存するファイル名
+    workbook.save(ar_filename)  # 変更を保存
     
     information = '記録なし'
     
@@ -469,97 +457,79 @@ def record(): #? 出席
         window.Maximize()
         return window  # window変数を返す
     
-    def get_name_by_id(id): #? IDから名前を取得
+    def get_name_by_id(id):  # IDから名前を取得
+        # Excelファイルを開く
+        wb = openpyxl.load_workbook('user_list.xlsx')
+        sheet = wb['user_list']
         
-        # IDに対応する名前を取得するSQLクエリを実行
-        cursor.execute("SELECT Name FROM Register WHERE ID=?", (id,))
-        result = cursor.fetchone()
+        # IDが数値かどうかを確認
+        if id.isdigit():  # 数値の場合はIDで検索
+            for row in sheet.iter_rows(min_row=2, values_only=True):  # ヘッダーをスキップしてデータ行を処理
+                try:
+                    # IDが一致するかを比較
+                    if float(row[0]) == float(id):  # ID列が数値の場合、floatに変換して比較
+                        return row[1]  # 名前を返す
+                except Exception as e:
+                    logging.error(f"Error processing row {row}: {e}")
+        else:  # 数値以外の場合は名前で検索
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                try:
+                    # 名前が一致するかを比較
+                    if str(row[1]).strip() == str(id).strip():  # 名前列が一致する場合
+                        return row[1]  # 名前を返す
+                except Exception as e:
+                    logging.error(f"Error processing row {row}: {e}")
         
-        if result:
-            return result[0]  # 名前を返す
-        else:
-            return "出席処理されていない名前"  # IDに対応する名前が見つからない場合は特定の値を返す
-    
+        return "出席処理されていない名前"  # 見つからない場合
     
     window = mainwindowshow()  # mainwindowshow()関数を呼び出して、window変数に代入する
     
-    while True: #? 無限ループ
+    while True:  # 無限ループ
         # イベントとデータの読み込み
         event, values = window.read()
         
-        
-        #? OKが押されたときの処理
+        # OKが押されたときの処理
         if event == 'OK' or event == 'Escape:13' or capbool:
             name = values["-NAME-"]
             name_name = name
             
-            # 入力された名前をDBで検索
-            cursor.execute("SELECT * FROM Register WHERE ID=?", (name,))
-            result = cursor.fetchone()
+            # 入力されたIDでExcelから検索
             name = get_name_by_id(name)
             
-            if not result:
-                if not config_data['NameEntryAllowed']:
-                    messagebox.showwarning("WARNING", "名前での入力は許可されていません。\nIDで入力してください。")
-                    window.close()
-                    window = mainwindowshow()
-                    continue
-                
-                name = name_name
-                cursor.execute("SELECT * FROM Register WHERE Name=?", (name,))
-                result = cursor.fetchone()
+            if name == "出席処理されていない名前":
+                # 名前が見つからない場合の処理
+                messagebox.showwarning("WARNING", "IDに対応する名前が見つかりません。")
+                window.close()
+                window = mainwindowshow()  # 新しいウィンドウを表示
+                continue
             
-            if result:
-                # コンフィグの値を取得
-                absence_state = values['-ABSENCE-']
-                leave_early = values['-LEAVE_EARLY-']
-                
-                current_date = datetime.now()
-                
-                AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
-                info = "出席"
-                
-                # 状態を記録
-                
-                if absence_state and leave_early:
-                    info = "error"
-                elif absence_state:
-                    AttendanceTime = "欠席"
-                    info = "欠席"
-                elif leave_early:
-                    AttendanceTime = f"早退 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
-                    info = "早退"
-                elif current_date.hour > lateness_time_hour or (current_date.hour == lateness_time_hour and current_date.minute > lateness_time_minute):
-                    AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
-                    info = "遅刻"
-                
-                if info == "error":
-                    messagebox.showwarning('警告', '早退または欠席、一つを選択してください。')
-                elif absence_state or leave_early:
-                    if messagebox.askyesno('INFO', f'{info}として{name}さんを記録しますか？'):
-                        # 名前が一致する行を探し、出席を記録
-                        for row in range(1, temp_sheet.max_row + 1):
-                            if temp_sheet.cell(row=row, column=1).value == name:
-                                temp_sheet.cell(row=row, column=3, value=AttendanceTime)
-                                workbook.save(ar_filename)
-                                
-                                information = f'{name}さんの{info}処理は完了しました。'
-                                
-                                window["-NAME-"].update("")  # 入力フィールドをクリア
-                                conn.commit()  # 変更を確定
-                                
-                                window.close()
-                                window = mainwindowshow()
-                                break
-                else:
-                    # 名前が一致する行を探し、出席を記録
-                    for row in range(1, sheet.max_row + 1):
-                        if sheet.cell(row=row, column=1).value == name:
-                            sheet.cell(row=row, column=current_date.day + 9, value=AttendanceTime)
-                            workbook.save(ar_filename)
-                            
-                            conn.commit()  # 変更を確定
-                        
+            # コンフィグの値を取得
+            absence_state = values['-ABSENCE-']
+            leave_early = values['-LEAVE_EARLY-']
+            
+            current_date = datetime.now()
+            
+            AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+            info = "出席"
+            
+            # 状態を記録
+            
+            if absence_state and leave_early:
+                info = "error"
+            elif absence_state:
+                AttendanceTime = "欠席"
+                info = "欠席"
+            elif leave_early:
+                AttendanceTime = f"早退 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                info = "早退"
+            elif current_date.hour > lateness_time_hour or (current_date.hour == lateness_time_hour and current_date.minute > lateness_time_minute):
+                AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
+                info = "遅刻"
+            
+            if info == "error":
+                messagebox.showwarning('警告', '早退または欠席、一つを選択してください。')
+            elif absence_state or leave_early:
+                if messagebox.askyesno('INFO', f'{info}として{name}さんを記録しますか？'):
                     # 名前が一致する行を探し、出席を記録
                     for row in range(1, temp_sheet.max_row + 1):
                         if temp_sheet.cell(row=row, column=1).value == name:
@@ -567,19 +537,31 @@ def record(): #? 出席
                             workbook.save(ar_filename)
                             
                             information = f'{name}さんの{info}処理は完了しました。'
+                            
                             window["-NAME-"].update("")  # 入力フィールドをクリア
-                            conn.commit()  # 変更を確定
                             
                             window.close()
                             window = mainwindowshow()
                             break
             else:
-                # 失敗処理
-                logging.error(f"{name} はデータベースに存在しません。")
-                messagebox.showinfo('失敗', f'{name} はデータベースに存在しません。')
-                window["-NAME-"].update("")  # 入力フィールドをクリア
-                window.close()
-                window = mainwindowshow()
+                # 名前が一致する行を探し、出席を記録
+                for row in range(1, sheet.max_row + 1):
+                    if sheet.cell(row=row, column=1).value == name:
+                        sheet.cell(row=row, column=current_date.day + 9, value=AttendanceTime)
+                        workbook.save(ar_filename)
+                    
+                # 名前が一致する行を探し、出席を記録
+                for row in range(1, temp_sheet.max_row + 1):
+                    if temp_sheet.cell(row=row, column=1).value == name:
+                        temp_sheet.cell(row=row, column=3, value=AttendanceTime)
+                        workbook.save(ar_filename)
+                        
+                        information = f'{name}さんの{info}処理は完了しました。'
+                        window["-NAME-"].update("")  # 入力フィールドをクリア
+                        
+                        window.close()
+                        window = mainwindowshow()
+                        break
         
         #? 閉じられるときの処理
         if event == '終了' or event == sg.WIN_CLOSED:
@@ -603,7 +585,7 @@ def record(): #? 出席
             current_date_y = current_date.strftime("%Y")
             
             # 記録ファイル名
-            ar_filename = f"{current_date_y}Attendance records.xlsx"
+            ar_filename = f"{current_date_y}Attendance_records.xlsx"
             
             # すべての行の3列目のセルが空白の場合「無断欠席」を記録
             for row in range(2, sheet.max_row + 1):
@@ -631,7 +613,6 @@ def control_panel(): #? 管理画面
             Automatic_late_time_setting = config_data['AutomaticLateTimeSetting']
             Manual_late_time_setting = not Automatic_late_time_setting
             Lateness_Time = config_data['Lateness_time']
-            NameEntryAllowed = config_data['NameEntryAllowed']
             
             # レイアウトの定義
             layout = [
@@ -641,8 +622,7 @@ def control_panel(): #? 管理画面
                     sg.Checkbox('起動時の時間 + X 分後に自動的に決める。', default=Automatic_late_time_setting, key='-AutomaticLateTimeSetting-', enable_events=True),
                     sg.Checkbox('時間を手動で入力する。', default=Manual_late_time_setting, key='-ManualLateTimeSetting-', enable_events=True)
                 ],
-                [sg.Text('自動設定の場合の X を決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey', enable_events=True)],
-                [sg.Checkbox('名前入力を許可する。', default=NameEntryAllowed, key='-NameEntryAllowed-', enable_events=True), sg.Text('hint:不許可にすると名前による出席が拒否されます。')], 
+                [sg.Text('自動設定の場合の X を決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey', enable_events=True)], 
                 [sg.Button('戻る')]
             ]
             
@@ -687,12 +667,6 @@ def control_panel(): #? 管理画面
                         
                         # config変更
                         config_data["AutomaticLateTimeSetting"] = False
-                
-                if event == '-NameEntryAllowed-':
-                    if values['-NameEntryAllowed-']:
-                        config_data["NameEntryAllowed"] = True
-                    else:
-                        config_data["NameEntryAllowed"] = False
 
     
     def password_change(): # パスワード変更
@@ -767,8 +741,8 @@ window['-PROG-'].update(40)
 if not os.path.exists("config.json"):
     exit_with_error("config.json file not found.")
 
-if not os.path.exists("Register.db"):
-    exit_with_error("Register.db file not found.")
+if not os.path.exists("user_list.xlsx"):
+    exit_with_error("user_list.xlsx file not found.")
 
 window['-PROG-'].update(50)
 
@@ -776,7 +750,7 @@ window['-PROG-'].update(50)
 current_date = datetime.now()
 current_date_y = current_date.strftime("%Y")
 
-ar_filename = f"{current_date_y}Attendance records.xlsx"
+ar_filename = f"{current_date_y}Attendance_records.xlsx"
 
 if not os.path.exists(ar_filename):
     # ファイルが存在しない場合の処理
