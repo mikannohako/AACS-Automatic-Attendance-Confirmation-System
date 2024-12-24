@@ -7,7 +7,7 @@
 --------------------
 ■　主な機能
 
-・出欠をExcelファイルに記録
+・出席や欠席の情報をExcelに自動で記録
 
 --------------------
 ■　動作環境
@@ -41,3 +41,13 @@ URL: https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-Syste
 
 1. 「AACS.exe」を実行してください。
 2. メニュー画面が出るので使用する機能を選んでください
+
+--------------------
+■　免責事項
+
+Disclaimer: This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+
+--------------------
+■　著作権
+
+Copyright (c) 2024 mikannohako. All rights reserved.
