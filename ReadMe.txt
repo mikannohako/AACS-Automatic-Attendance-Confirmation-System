@@ -39,6 +39,10 @@ URL: https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-Syste
 --------------------
 ■　使用方法
 
+（初めての場合）
+1. 「user_list.xlsx」を開きID（一列目）と名前（二列目）を設定してください。
+
+（二回目以降）
 1. 「AACS.exe」を実行してください。
 2. メニュー画面が出るので使用する機能を選んでください
 
