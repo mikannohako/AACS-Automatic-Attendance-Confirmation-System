@@ -19,6 +19,11 @@ import requests
 import webbrowser
 import msvcrt
 import tempfile
+import cv2
+import face_recognition
+import numpy as np
+import pickle  # データ保存用
+from tqdm import tqdm  # プログレスバー表示ライブラリ
 
 #? tkinterのダイアログボックスを常時最前面に表示
 
@@ -103,20 +108,6 @@ def exit_with_error(message): #? エラー時の処理用関数
     os.remove(lock_file_path)
     
     sys.exit(1)
-
-def password_check():
-    user_pass = simpledialog.askstring('パスワード入力', 'パスワードを入力してください：')
-    
-    if not user_pass == None:
-        # パスワードをUTF-8形式でエンコードしてハッシュ化
-        hashed_password = hashlib.sha256(user_pass.encode('utf-8')).hexdigest()
-        
-        if config_data["passPhrase"] == hashed_password:
-            messagebox.showinfo("成功", "パスワードの認証に成功しました。")
-            return True
-        else:
-            messagebox.showwarning("失敗", "パスワードが間違っています。")
-            return False
 
 # 外部Excelファイルを読み込む
 def load_user_data(file_path):
@@ -284,14 +275,14 @@ def record(): #? 出席
     #? 遅刻時間の設定
     while True:
         
-        if config_data["AutomaticLateTimeSetting"]:
+        if config_data["automatic_late_time_setting"]:
             # 時間の設定が自動になっている場合
             
             # 各変数に現在の時間を代入
             lateness_time_hour = current_date.hour
             lateness_time_minute = current_date.minute
             # 設定されている時間分分を足す
-            lateness_time_minute = lateness_time_minute + config_data['Lateness_time']
+            lateness_time_minute = lateness_time_minute + config_data['lateness_time']
             
             # 分が60以上だったら時間を一足して分から60引く
             if lateness_time_minute >= 60:
@@ -411,8 +402,6 @@ def record(): #? 出席
     ar_filename = f"{current_date_y}Attendance_records.xlsx"  # 保存するファイル名
     workbook.save(ar_filename)  # 変更を保存
     
-    information = '記録なし'
-    
     capbool = False
     
     def mainwindowshow(): #? メインウィンドウ表示
@@ -430,22 +419,36 @@ def record(): #? 出席
         
         header = ['名前', 'ID', '出席状況']  # 各列のヘッダーを指定
         
-        
+        # 左側のレイアウト
         left_column = [
-            [sg.Text(information, font=("Helvetica", 40))],
+            [sg.Text('記録なし', key="-OUTPUT-", font=("Helvetica", 40))],
             [sg.Text('名前またはIDを入力してください。', key="-INPUT-", font=("Helvetica", 15))],
             [sg.InputText(key="-NAME-", font=("Helvetica", 15))],
-            [sg.Button('OK', bind_return_key=True, font=("Helvetica", 15)),
-                sg.Button('終了', bind_return_key=True, font=("Helvetica", 15)),
+            [
+                sg.Button('OK', bind_return_key=True, font=("Helvetica", 15)),
+                sg.Button('終了', font=("Helvetica", 15)),
                 sg.Checkbox('欠席', key='-ABSENCE-', enable_events=True),
-                sg.Checkbox('早退', key='-LEAVE_EARLY-', enable_events=True)],
-            [sg.Table(values=data, headings=header, display_row_numbers=False, auto_size_columns=False, num_rows=min(20, len(data)))]
+                sg.Checkbox('早退', key='-LEAVE_EARLY-', enable_events=True)
+            ],
+            [sg.Table(key="-TABLE-", values=data, headings=header, display_row_numbers=False, auto_size_columns=False, num_rows=min(20, len(data)))],
+            [sg.Text('', key="-INFO-", font=("Helvetica", 15))]
         ]
-        
-        # GUI画面のレイアウト
-        layout = [
-            [sg.Column(left_column)]
+
+        # 右側のレイアウト（カメラ映像用）
+        right_column = [
+            [sg.Text("カメラ映像", font=("Helvetica", 20))],
+            [sg.Image(filename="", key="-IMAGE-")]  # カメラ映像表示用
         ]
+
+        # 全体レイアウト
+        if config_data['facial_recognition']:
+            layout = [
+                [sg.Column(left_column), sg.VSeparator(), sg.Column(right_column)]
+            ]
+        else:
+            layout = [
+                [sg.Column(left_column)]
+            ]
         
         window = sg.Window('出席処理', layout, finalize=True)
         window.Maximize()
@@ -478,14 +481,70 @@ def record(): #? 出席
     
     window = mainwindowshow()  # mainwindowshow()関数を呼び出して、window変数に代入する
     
+    if config_data['facial_recognition']:
+        # カメラを初期化
+        video_capture = cv2.VideoCapture(0)
+
+        process_this_frame = True
+    face_permitted = False
+    
     while True:  # 無限ループ
         # イベントとデータの読み込み
-        event, values = window.read()
+        event, values = window.read(timeout=20)
         
-        # OKが押されたときの処理
-        if event == 'OK' or event == 'Escape:13' or capbool:
-            name = values["-NAME-"]
-            name_name = name
+        if config_data['facial_recognition']:
+            window["-INFO-"].update("顔認識は正常に稼働中です。")
+            
+            # 許容度（低いほど厳しい）
+            tolerance = 0.5
+            
+            data_file = "face_data.pkl"  # 保存するデータファイル名
+            
+            # 既存データをロード
+            face_data = load_face_data(data_file)
+            known_face_encodings, known_face_names = face_data
+            
+            ret, frame = video_capture.read()
+            if not ret:
+                print("カメラの映像取得に失敗しました")
+                break
+            
+            # 顔認識処理
+            if process_this_frame:
+                small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+                rgb_small_frame = np.ascontiguousarray(small_frame[:, :, ::-1])
+                face_locations = face_recognition.face_locations(rgb_small_frame)
+                face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+                face_locations = [(top * 4, right * 4, bottom * 4, left * 4) for (top, right, bottom, left) in face_locations]
+            
+            process_this_frame = not process_this_frame
+
+            # 顔認識結果をフレームに描画
+            for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
+                matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=tolerance)
+                name = "Unknown"
+                
+                if True in matches:
+                    first_match_index = matches.index(True)
+                    name = known_face_names[first_match_index]
+                    print(f"認証成功: {name}")
+                    face_permitted = True
+                    break
+                
+                cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+                font = cv2.FONT_HERSHEY_DUPLEX
+                cv2.putText(frame, name, (left + 6, bottom - 6), font, 0.5, (255, 255, 255), 1)
+            
+            # カメラ映像の更新
+            imgbytes = cv2.imencode(".png", frame)[1].tobytes()
+            window["-IMAGE-"].update(data=imgbytes)
+
+        # OKボタン押されたときの処理
+        if event == 'OK' or event == 'Escape:13' or capbool or face_permitted:
+            
+            if face_permitted == False:
+                name = values["-NAME-"]
+            face_permitted = False
             
             # 入力されたIDでExcelから検索
             name = get_name_by_id(name)
@@ -493,8 +552,6 @@ def record(): #? 出席
             if name == "出席処理されていない名前":
                 # 名前が見つからない場合の処理
                 messagebox.showwarning("WARNING", "IDに対応する名前が見つかりません。")
-                window.close()
-                window = mainwindowshow()  # 新しいウィンドウを表示
                 continue
             
             # コンフィグの値を取得
@@ -530,12 +587,25 @@ def record(): #? 出席
                             temp_sheet.cell(row=row, column=3, value=AttendanceTime)
                             workbook.save(ar_filename)
                             
-                            information = f'{name}さんの{info}処理は完了しました。'
+                            # シートから欠席のデータを取得してリストに格納
+                            data = []
+                            
+                            for row in temp_sheet.iter_rows(values_only=True):
+                                if row[2] == '無断欠席':  # 無断欠席のデータのみを抽出 
+                                    modified_row = list(row)
+                                    modified_row[2] = '未出席'
+                                    data.append(modified_row)
+                                else:
+                                    data.append(list(row))
+                            
+                            window["-TABLE-"].update(data)
+                            
+                            window["-LEAVE_EARLY-"].update(False)
+                            window["-ABSENCE-"].update(False)
+                            
+                            window["-OUTPUT-"].update(f'{name}さんの{info}処理は完了しました。')
                             
                             window["-NAME-"].update("")  # 入力フィールドをクリア
-                            
-                            window.close()
-                            window = mainwindowshow()
                             break
             else:
                 # 名前が一致する行を探し、出席を記録
@@ -543,31 +613,41 @@ def record(): #? 出席
                     if sheet.cell(row=row, column=1).value == name:
                         sheet.cell(row=row, column=current_date.day + 9, value=AttendanceTime)
                         workbook.save(ar_filename)
-                    
-                # 名前が一致する行を探し、出席を記録
+                
                 for row in range(1, temp_sheet.max_row + 1):
                     if temp_sheet.cell(row=row, column=1).value == name:
                         temp_sheet.cell(row=row, column=3, value=AttendanceTime)
                         workbook.save(ar_filename)
                         
-                        information = f'{name}さんの{info}処理は完了しました。'
-                        window["-NAME-"].update("")  # 入力フィールドをクリア
+                        # シートから欠席のデータを取得してリストに格納
+                        data = []
                         
-                        window.close()
-                        window = mainwindowshow()
+                        for row in temp_sheet.iter_rows(values_only=True):
+                            if row[2] == '無断欠席':  # 無断欠席のデータのみを抽出 
+                                modified_row = list(row)
+                                modified_row[2] = '未出席'
+                                data.append(modified_row)
+                            else:
+                                data.append(list(row))
+                        
+                        window["-TABLE-"].update(data)
+                        window["-LEAVE_EARLY-"].update(False)
+                        window["-ABSENCE-"].update(False)
+                        window["-OUTPUT-"].update(f'{name}さんの{info}処理は完了しました。')
+                        window["-NAME-"].update("")  # 入力フィールドをクリア
                         break
         
-        #? 閉じられるときの処理
+        # ウィンドウが閉じられた場合の処理
         if event == '終了' or event == sg.WIN_CLOSED:
+            # カメラを解放
+            if config_data['facial_recognition']:
+                video_capture.release()
             
             window.close()
             
-            #? 一時シート削除
-            
-            # 削除したいシート名を指定
+            # 一時シート削除
             sheet_name_to_delete = "temp"
             
-            # シートを削除
             if sheet_name_to_delete in workbook.sheetnames:
                 sheet_to_delete = workbook[sheet_name_to_delete]
                 workbook.remove(sheet_to_delete)
@@ -583,135 +663,100 @@ def record(): #? 出席
             
             # すべての行の3列目のセルが空白の場合「無断欠席」を記録
             for row in range(2, sheet.max_row + 1):
-                # 各行の1列目の値が空白かどうかを一致するか確認
                 if sheet.cell(row=row, column=current_date.day + 9).value == None:
-                    # 一致した行に無断欠席を入力
                     sheet.cell(row=row, column=current_date.day + 9, value="無断欠席")
             
             # 変更を保存する
             workbook.save(ar_filename)
             
             messagebox.showinfo('完了', '記録終了は正常に終了しました。')
-            
             break
 
-def control_panel(): #? 管理画面
-    
-    def DB_Operations(): # DB変更
-        messagebox.showinfo("INFO", "まだこの機能は実装されていません")
-    
-    def setting(): # 設定変更画面
-        
-        while True:
-            
-            Automatic_late_time_setting = config_data['AutomaticLateTimeSetting']
-            Manual_late_time_setting = not Automatic_late_time_setting
-            Lateness_Time = config_data['Lateness_time']
-            
-            # レイアウトの定義
-            layout = [
-                [sg.Text('変更したい設定だけ変更してください。')],
-                [sg.Text('遅刻時間')],
-                [
-                    sg.Checkbox('起動時の時間 + X 分後に自動的に決める。', default=Automatic_late_time_setting, key='-AutomaticLateTimeSetting-', enable_events=True),
-                    sg.Checkbox('時間を手動で入力する。', default=Manual_late_time_setting, key='-ManualLateTimeSetting-', enable_events=True)
-                ],
-                [sg.Text('自動設定の場合の X を決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey', enable_events=True)], 
-                [sg.Button('戻る')]
-            ]
-            
-            # ウィンドウの生成
-            window = sg.Window('設定', layout)
-            
-            # イベントループ
-            while True:
-                event, values = window.read()
-                
-                Lateness_Time = values['-LatenessTime-']
-                
-                if event == sg.WINDOW_CLOSED or event == '戻る': # 終了
-                    window.close()
-                    
-                    if not Lateness_Time == None:
-                        lateness_time_str = Lateness_Time  # InputTextウィジェットからの文字列を取得
-                        lateness_time_int = int(lateness_time_str)  # 文字列をint型に変換
-                        
-                        config_data["Lateness_time"] = lateness_time_int
-                    
-                    json_save()
-                    
-                    return
-                
-                if event == '-AutomaticLateTimeSetting-':
-                    if values['-AutomaticLateTimeSetting-']:
-                        window['-ManualLateTimeSetting-'].update(False)
-                        
-                        # 入力ボックス有効化
-                        window['-LatenessTime-'].update(disabled=False)
-                        
-                        # config変更
-                        config_data["AutomaticLateTimeSetting"] = True
-                
-                elif event == '-ManualLateTimeSetting-':
-                    if values['-ManualLateTimeSetting-']:
-                        window['-AutomaticLateTimeSetting-'].update(False)
-                        
-                        # 入力ボックス無効化
-                        window['-LatenessTime-'].update(disabled=True)
-                        
-                        # config変更
-                        config_data["AutomaticLateTimeSetting"] = False
 
-    
-    def password_change(): # パスワード変更
-        
-        if password_check():
-            new_passphrase = simpledialog.askstring('パスワード入力', '新しいパスワードを入力してください。')
-            new_passphrase_1 = simpledialog.askstring("再入力", "パスワードをもう一度入力してください。")
-            if new_passphrase_1 == new_passphrase:
-                try:
-                    # パスワードをUTF-8形式でエンコードしてハッシュ化
-                    hashed_password = hashlib.sha256(new_passphrase.encode('utf-8')).hexdigest()
-                    config_data["passPhrase"] = hashed_password
-                    json_save()
-                    logging.info(f"パスワードが変更されました。ハッシュ値: {hashed_password}")
-                    messagebox.showinfo("成功", "パスワードの変更に成功しました。")
-                except:
-                    messagebox.showwarning("失敗", "パスワードの変更に失敗しました。")
-            else:
-                messagebox.showwarning("失敗", "パスワードの再入力に失敗しました。")
-    
-    #? 管理画面
+def setting(): #? 設定変更画面
     
     while True:
+        
+        Automatic_late_time_setting = config_data['automatic_late_time_setting']
+        Manual_late_time_setting = not Automatic_late_time_setting
+        Lateness_Time = config_data['lateness_time']
+        facial_recognition = config_data['facial_recognition']
+        
+        # レイアウトの定義
         layout = [
+            [sg.Text('変更したい設定だけ変更してください。')],
+            [sg.Text('遅刻時間')],
             [
-                sg.Button('戻る', bind_return_key=True, font=("Helvetica", 15)),
-                sg.Button('DB変更', bind_return_key=True, font=("Helvetica", 15)),
-                sg.Button('設定', bind_return_key=True, font=('Helvetica', 15)),
-                sg.Button('パスワード変更', bind_return_key=True, font=('Helvetica', 15))
-            ]
+                sg.Checkbox('起動時の時間 + X 分後に自動的に決める。', default=Automatic_late_time_setting, key='-automatic_late_time_setting-', enable_events=True),
+                sg.Checkbox('時間を手動で入力する。', default=Manual_late_time_setting, key='-ManualLateTimeSetting-', enable_events=True)
+            ],
+            [sg.Text('自動設定の場合の X を決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey', enable_events=True)], 
+            [sg.Checkbox('顔認識', default=facial_recognition, key='-facial_recognition-', enable_events=True)],
+            [sg.Text('顔認識は環境によっては正常に動かない場合があります。また処理が重くなる場合があります。')],
+            [sg.Button('戻る'), sg.Button('初期設定に戻す')]
         ]
         
-        Window = sg.Window('管理画面', layout, finalize=True, keep_on_top=True)
+        # ウィンドウの生成
+        window = sg.Window('設定', layout)
         
-        event, values = Window.read()
-        
-        if event == 'DB変更':
-            Window.close()
-            DB_Operations()
-        
-        elif event == '設定':
-            Window.close()
-            setting()
-        
-        elif event == 'パスワード変更':
-            Window.close()
-            password_change()
-        
-        elif event == sg.WINDOW_CLOSED or event == '戻る':
-            Window.close()
-            break
+        # イベントループ
+        while True:
+            event, values = window.read()
+            
+            Lateness_Time = values['-LatenessTime-']
+            
+            if event == '初期設定に戻す':
+                window.close()
+                
+                config_data['automatic_late_time_setting'] = True
+                config_data['lateness_time'] = 15
+                
+                config_data["facial_recognition"] = False
+                
+                json_save()
+                
+                return
+            
+            if event == sg.WINDOW_CLOSED or event == '戻る': # 終了
+                window.close()
+                
+                if not Lateness_Time == None:
+                    lateness_time_str = Lateness_Time  # InputTextウィジェットからの文字列を取得
+                    lateness_time_int = int(lateness_time_str)  # 文字列をint型に変換
+                    
+                    config_data['lateness_time'] = lateness_time_int
+                
+                json_save()
+                
+                return
+            
+            if event == '-facial_recognition-':
+                if values['-facial_recognition-']:
+                    # config変更
+                    config_data["facial_recognition"] = True
+                else:
+                    # config変更
+                    config_data["facial_recognition"] = False
+            
+            if event == '-automatic_late_time_setting-':
+                if values['-automatic_late_time_setting-']:
+                    window['-ManualLateTimeSetting-'].update(False)
+                    
+                    # 入力ボックス有効化
+                    window['-LatenessTime-'].update(disabled=False)
+                    
+                    # config変更
+                    config_data["automatic_late_time_setting"] = True
+            
+            elif event == '-ManualLateTimeSetting-':
+                if values['-ManualLateTimeSetting-']:
+                    window['-automatic_late_time_setting-'].update(False)
+                    
+                    # 入力ボックス無効化
+                    window['-LatenessTime-'].update(disabled=True)
+                    
+                    # config変更
+                    config_data["automatic_late_time_setting"] = False
 
 #? 起動
 
@@ -766,6 +811,66 @@ window['-PROG-'].update(70)
 
 window.close()
 
+#? 顔認証
+
+if config_data['facial_recognition']:
+    
+    data_file = "face_data.pkl"  # 保存するデータファイル名
+    
+    face_permit = False
+    
+    # 顔データをロードする
+    def load_face_data(file):
+        if os.path.exists(file):
+            with open(file, "rb") as f:
+                return pickle.load(f)
+        return None
+    
+    # 顔データを保存する
+    def save_face_data(file, encodings, names):
+        with open(file, "wb") as f:
+            pickle.dump((encodings, names), f)
+            
+    # 既存データをロード
+    face_data = load_face_data(data_file)
+    
+    if face_data:
+        known_face_encodings, known_face_names = face_data
+        print("顔データをロードしました。")
+    else:
+        print("顔データが見つからないため、新たに作成します。")
+        # 画像フォルダのパス
+        image_folder = 'face_images/'
+        
+        # 画像を読み込み、顔の特徴を記録する
+        known_face_encodings = []
+        known_face_names = []
+        
+        # フォルダごとに画像を処理
+        folder_list = [folder for folder in os.listdir(image_folder) if os.path.isdir(os.path.join(image_folder, folder))]
+        
+        # tqdm を使ってフォルダの処理状況を表示
+        for foldername in tqdm(folder_list, desc="Processing Folders"):
+            folder_path = os.path.join(image_folder, foldername)
+            
+            # フォルダ内の画像ファイルを処理
+            image_files = [f for f in os.listdir(folder_path) if f.endswith(".jpg")]
+            
+            # tqdm を使ってフォルダ内の画像ファイルの処理状況を表示
+            for filename in tqdm(image_files, desc=f"Processing Images in {foldername}", leave=False):
+                image_path = os.path.join(folder_path, filename)
+                image = face_recognition.load_image_file(image_path)
+                encoding = face_recognition.face_encodings(image)
+                
+                if encoding:
+                    # 複数の画像から同じ人物の特徴を追加
+                    known_face_encodings.append(encoding[0])
+                    known_face_names.append(foldername)  # フォルダ名を表示名として取得
+
+        # データを保存
+        save_face_data(data_file, known_face_encodings, known_face_names)
+        print("顔データを保存しました。")
+
 #? メイン
 
 update()
@@ -775,8 +880,8 @@ while True:  #? 無限ループ
     layout = [
         [sg.Text("起動する機能を選んでください。", font=("Helvetica", 15), justification='center')],  # カンマを追加
         [sg.Button('記録', bind_return_key=True, font=("Helvetica", 15)),
-            sg.Button('終了', bind_return_key=True, font=("Helvetica", 15)),
-            sg.Button('管理画面', bind_return_key=True, font=("Helvetica", 15))]
+            sg.Button('設定', bind_return_key=True, font=("Helvetica", 15)),
+            sg.Button('終了', bind_return_key=True, font=("Helvetica", 15))]
     ]
     
     menu = sg.Window('MENU', layout, finalize=True, keep_on_top=True)
@@ -805,8 +910,7 @@ while True:  #? 無限ループ
 
         record()
     
-    if event == '管理画面':
+    if event == '設定':
         menu.close()
         tk.Tk().withdraw()
-        if password_check():
-            control_panel()
+        setting()
