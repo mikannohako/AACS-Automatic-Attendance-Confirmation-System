@@ -39,6 +39,8 @@
                 "tempfile",
                 "hashlib",
                 "messagebox",
-                "simpledialog"
+                "simpledialog",
+                "venv",
+                "logfile"
         ]
 }

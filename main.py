@@ -8,7 +8,6 @@ from tkinter import messagebox
 from tkinter import simpledialog
 import tkinter as tk
 import tkinter.simpledialog as simpledialog
-import sqlite3
 import openpyxl
 from openpyxl import load_workbook
 from openpyxl.worksheet.table import TableStyleInfo

@@ -1,0 +1,5 @@
+face_images/
+.venv/
+face_data.pkl
+2025Attendance_records.xlsx
+logfile.log
