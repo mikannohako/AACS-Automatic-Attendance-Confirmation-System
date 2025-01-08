@@ -190,11 +190,6 @@ def json_save(): #? JSONデータを保存
     with open('config.json', 'w') as f:
         json.dump(config_data, f, indent=4)
 
-import openpyxl
-from openpyxl.worksheet.table import Table, TableStyleInfo
-import logging
-from datetime import datetime
-
 # ログ設定
 logging.basicConfig(level=logging.INFO)
 
