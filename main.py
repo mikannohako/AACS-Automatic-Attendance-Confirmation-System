@@ -588,10 +588,8 @@ def record(): #? 出席
                 AttendanceTime = f"遅刻 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
                 info = "遅刻"
             
-            if info == "error":
-                messagebox.showwarning('警告', '早退または欠席、一つを選択してください。')
-            elif info == "出席済み":
-                messagebox.showinfo('INFO', f'{name}さんは既に出席済みです。')
+            if info == "出席済み":
+                pass
             elif info == "欠席" or info == "早退":
                 if messagebox.askyesno('INFO', f'{info}として{name}さんを記録しますか？'):
                     # 名前が一致する行を探し、出席を記録
