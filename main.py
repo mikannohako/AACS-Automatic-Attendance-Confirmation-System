@@ -475,7 +475,7 @@ def record(): #? 出席
                 except Exception as e:
                     logging.error(f"Error processing row {row}: {e}")
         
-        return "出席処理されていない名前"  # 見つからない場合
+        return "記録されていない名前"  # 見つからない場合
     
     window = mainwindowshow()  # mainwindowshow()関数を呼び出して、window変数に代入する
     
@@ -489,6 +489,14 @@ def record(): #? 出席
     while True:  # 無限ループ
         # イベントとデータの読み込み
         event, values = window.read(timeout=20)
+        
+        if event == '-ABSENCE-':
+            if values['-ABSENCE-']:
+                window['-LEAVE_EARLY-'].update(False)
+        
+        if event == '-LEAVE_EARLY-':
+            if values['-LEAVE_EARLY-']:
+                window['-ABSENCE-'].update(False)
         
         if config_data['facial_recognition']:
             window["-INFO-"].update("顔認識は正常に稼働中です。")
@@ -547,7 +555,7 @@ def record(): #? 出席
             # 入力されたIDでExcelから検索
             name = get_name_by_id(name)
             
-            if name == "出席処理されていない名前":
+            if name == "記録されていない名前":
                 # 名前が見つからない場合の処理
                 messagebox.showwarning("WARNING", "IDに対応する名前が見つかりません。")
                 continue
@@ -561,11 +569,16 @@ def record(): #? 出席
             AttendanceTime = f"出席 {current_date.strftime('%H')}:{current_date.strftime('%M')}"
             info = "出席"
             
+            for row in range(1, temp_sheet.max_row + 1):
+                if temp_sheet.cell(row=row, column=1).value == name:
+                    if temp_sheet.cell(row=row, column=3).value != "無断欠席":
+                        if absence_state == False:
+                            if leave_early == False:
+                                info = "出席済み"
+            
             # 状態を記録
             
-            if absence_state and leave_early:
-                info = "error"
-            elif absence_state:
+            if absence_state:
                 AttendanceTime = "欠席"
                 info = "欠席"
             elif leave_early:
@@ -577,9 +590,16 @@ def record(): #? 出席
             
             if info == "error":
                 messagebox.showwarning('警告', '早退または欠席、一つを選択してください。')
-            elif absence_state or leave_early:
+            elif info == "出席済み":
+                messagebox.showinfo('INFO', f'{name}さんは既に出席済みです。')
+            elif info == "欠席" or info == "早退":
                 if messagebox.askyesno('INFO', f'{info}として{name}さんを記録しますか？'):
                     # 名前が一致する行を探し、出席を記録
+                    for row in range(1, sheet.max_row + 1):
+                        if sheet.cell(row=row, column=1).value == name:
+                            sheet.cell(row=row, column=current_date.day + 9, value=AttendanceTime)
+                            workbook.save(ar_filename)
+                    
                     for row in range(1, temp_sheet.max_row + 1):
                         if temp_sheet.cell(row=row, column=1).value == name:
                             temp_sheet.cell(row=row, column=3, value=AttendanceTime)
