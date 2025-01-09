@@ -1,4 +1,5 @@
-face_images/
+face_images/*
+!face_images/.gitkeep
 .venv/
 face_data.pkl
 2025Attendance_records.xlsx
