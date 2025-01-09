@@ -3,6 +3,8 @@
 - [目次](#目次)
   - [このソフトについて](#このソフトについて)
   - [機能](#機能)
+  - [インストール方法](#インストール方法)
+  - [アンインストール方法](#アンインストール方法)
   - [開発に関すること](#開発に関すること)
     - [開発環境](#開発環境)
     - [使用ライブラリ](#使用ライブラリ)
@@ -24,25 +26,47 @@ Python初心者が練習などのために作ったソフトです。
 
 ## 機能
 
-- 記録用のファイルの作成
-- Excelに出力する出席処理
+- Excelに出席データを記録
+- 顔認証
 - 出席率の記録
 - 出席率のファイル出力　（予定）
-- 顔認証（いつかやる、、、かも？）
+
+## インストール方法
+
+1. Python公式サイトから最新のPython 3.12.x（推奨）をダウンロードし、インストールしてください。  
+   [Python公式ダウンロードページ](https://www.python.org/downloads/)
+2. このレポジトリの[最新のReleases](https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest)から`AACS.zip`をダウンロード
+3. 任意のフォルダに解凍
+4. `launch.vbs`を実行
+5. 機能を選択
+
+※初回起動時は起動に時間がかかる可能性があります。
+
+## アンインストール方法
+
+1. インストールされているフォルダごと消してください
+2. （任意）インストール時にインストールしたPythonをアンインストール
 
 ## 開発に関すること
 
 ### 開発環境
 
 - Windows 10 VSCode
+- Python 3.12.5
 
 ### 使用ライブラリ
+
+ライブラリのバージョンなどの詳しい情報は`requirements.txt`を参照してください。
 
 #### 外部ライブラリ
 
 - PySimpleGUI
 - openpyxl
 - requests
+- cv2
+- face_recognition
+- numpy
+- pickle
 
 #### 標準ライブラリ
 
@@ -57,6 +81,8 @@ Python初心者が練習などのために作ったソフトです。
 - logging
 - hashlib
 - tempfile
+- msvcrt
+- webbrowser
 
 ### VSCode使用拡張機能
 

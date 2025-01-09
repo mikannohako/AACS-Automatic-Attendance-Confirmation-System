@@ -44,6 +44,9 @@
                 "logfile",
                 "ascontiguousarray",
                 "ERRORLEVEL",
-                "chcp"
+                "chcp",
+                "webbrowser",
+                "msvcrt",
+                "numpy"
         ]
 }
