@@ -42,6 +42,8 @@
                 "simpledialog",
                 "venv",
                 "logfile",
-                "ascontiguousarray"
+                "ascontiguousarray",
+                "ERRORLEVEL",
+                "chcp"
         ]
 }
