@@ -14,7 +14,6 @@ from openpyxl.worksheet.table import TableStyleInfo
 from openpyxl.worksheet.table import Table
 import json
 import logging
-import hashlib
 import requests
 import webbrowser
 import msvcrt
@@ -23,7 +22,6 @@ import cv2
 import face_recognition
 import numpy as np
 import pickle  # データ保存用
-from tqdm import tqdm  # プログレスバー表示ライブラリ
 
 #? tkinterのダイアログボックスを常時最前面に表示
 
@@ -57,7 +55,7 @@ except IOError:
     sys.exit(1)
 
 # 起動用のプログレスバーの最大値を代入
-BAR_MAX = 70
+BAR_MAX = 100
 
 # プログレスバーのUIを作成
 layout = [
@@ -506,7 +504,7 @@ def record(): #? 出席
             
             ret, frame = video_capture.read()
             if not ret:
-                print("カメラの映像取得に失敗しました")
+                logging.error("カメラの映像取得に失敗しました")
                 break
             
             # 顔認識処理
@@ -527,7 +525,7 @@ def record(): #? 出席
                 if True in matches:
                     first_match_index = matches.index(True)
                     name = known_face_names[first_match_index]
-                    print(f"認証成功: {name}")
+                    
                     face_permitted = True
                     break
                 
@@ -809,8 +807,6 @@ with open(config_file_path, 'r') as config_file:
 
 window['-PROG-'].update(70)
 
-window.close()
-
 #? 顔認証
 
 if config_data['facial_recognition']:
@@ -834,11 +830,12 @@ if config_data['facial_recognition']:
     # 既存データをロード
     face_data = load_face_data(data_file)
     
+    window['-PROG-'].update(80)
+    
     if face_data:
         known_face_encodings, known_face_names = face_data
-        print("顔データをロードしました。")
     else:
-        print("顔データが見つからないため、新たに作成します。")
+        logging.info("顔データが見つからないため、新たに作成します。")
         # 画像フォルダのパス
         image_folder = 'face_images/'
         
@@ -849,15 +846,17 @@ if config_data['facial_recognition']:
         # フォルダごとに画像を処理
         folder_list = [folder for folder in os.listdir(image_folder) if os.path.isdir(os.path.join(image_folder, folder))]
         
-        # tqdm を使ってフォルダの処理状況を表示
-        for foldername in tqdm(folder_list, desc="Processing Folders"):
+        window['-PROG-'].update(90)
+        
+        # フォルダの処理
+        for foldername in folder_list:
             folder_path = os.path.join(image_folder, foldername)
             
             # フォルダ内の画像ファイルを処理
             image_files = [f for f in os.listdir(folder_path) if f.endswith(".jpg")]
             
-            # tqdm を使ってフォルダ内の画像ファイルの処理状況を表示
-            for filename in tqdm(image_files, desc=f"Processing Images in {foldername}", leave=False):
+            # フォルダ内の画像ファイルの処理
+            for filename in image_files:
                 image_path = os.path.join(folder_path, filename)
                 image = face_recognition.load_image_file(image_path)
                 encoding = face_recognition.face_encodings(image)
@@ -866,10 +865,13 @@ if config_data['facial_recognition']:
                     # 複数の画像から同じ人物の特徴を追加
                     known_face_encodings.append(encoding[0])
                     known_face_names.append(foldername)  # フォルダ名を表示名として取得
-
+        
         # データを保存
         save_face_data(data_file, known_face_encodings, known_face_names)
-        print("顔データを保存しました。")
+
+window['-PROG-'].update(100)
+
+window.close()
 
 #? メイン
 
