@@ -2,6 +2,6 @@
     "version": 770,
     "lateness_time": 15,
     "automatic_late_time_setting": true,
-    "facial_recognition": true,
+    "facial_recognition": false,
     "tolerance": 0.5
 }
