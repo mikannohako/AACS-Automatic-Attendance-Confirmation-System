@@ -513,37 +513,73 @@ def record(): #? 出席
             ret, frame = video_capture.read()
             if not ret:
                 logging.error("カメラの映像取得に失敗しました")
-                break
+                window["-INFO-"].update("カメラの取得に失敗しました。\n記録画面を閉じてカメラの接続を確認してから再度起動してください。")
+                error_frame = np.zeros((480, 640, 3), dtype=np.uint8)  # 真っ黒なフレームを生成
+                
+                # 1つ目のテキストと2つ目のテキスト
+                text1 = "Camera Error"
+                text2 = "Check the camera connection"
+                
+                text2_x, text2_y = 80, 280
+                text1_x, text1_y = 80, 240
+                
+                # テキストを描画
+                cv2.putText(
+                    error_frame, 
+                    text1, 
+                    (text1_x, text1_y), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 
+                    1, 
+                    (255, 255, 255),  # 白色
+                    2, 
+                    cv2.LINE_AA
+                )
+                
+                cv2.putText(
+                    error_frame, 
+                    text2, 
+                    (text2_x, text2_y), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 
+                    1, 
+                    (255, 255, 255),  # 白色
+                    2, 
+                    cv2.LINE_AA
+                )
+                
+                
+                imgbytes = cv2.imencode(".png", error_frame)[1].tobytes()
+                window["-IMAGE-"].update(data=imgbytes)  # GUIにエラーフレームを表示
+            else:
             
-            # 顔認識処理
-            if process_this_frame:
-                small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-                rgb_small_frame = np.ascontiguousarray(small_frame[:, :, ::-1])
-                face_locations = face_recognition.face_locations(rgb_small_frame)
-                face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
-                face_locations = [(top * 4, right * 4, bottom * 4, left * 4) for (top, right, bottom, left) in face_locations]
-            
-            process_this_frame = not process_this_frame
+                # 顔認識処理
+                if process_this_frame:
+                    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+                    rgb_small_frame = np.ascontiguousarray(small_frame[:, :, ::-1])
+                    face_locations = face_recognition.face_locations(rgb_small_frame)
+                    face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+                    face_locations = [(top * 4, right * 4, bottom * 4, left * 4) for (top, right, bottom, left) in face_locations]
+                
+                process_this_frame = not process_this_frame
 
-            # 顔認識結果をフレームに描画
-            for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-                matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=tolerance)
-                name = "Unknown"
-                
-                if True in matches:
-                    first_match_index = matches.index(True)
-                    name = known_face_names[first_match_index]
+                # 顔認識結果をフレームに描画
+                for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
+                    matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=tolerance)
+                    name = "Unknown"
                     
-                    face_permitted = True
-                    break
+                    if True in matches:
+                        first_match_index = matches.index(True)
+                        name = known_face_names[first_match_index]
+                        
+                        face_permitted = True
+                        break
+                    
+                    cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+                    font = cv2.FONT_HERSHEY_DUPLEX
+                    cv2.putText(frame, name, (left + 6, bottom - 6), font, 0.5, (255, 255, 255), 1)
                 
-                cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-                font = cv2.FONT_HERSHEY_DUPLEX
-                cv2.putText(frame, name, (left + 6, bottom - 6), font, 0.5, (255, 255, 255), 1)
-            
-            # カメラ映像の更新
-            imgbytes = cv2.imencode(".png", frame)[1].tobytes()
-            window["-IMAGE-"].update(data=imgbytes)
+                # カメラ映像の更新
+                imgbytes = cv2.imencode(".png", frame)[1].tobytes()
+                window["-IMAGE-"].update(data=imgbytes)
 
         # OKボタン押されたときの処理
         if event == 'OK' or event == 'Escape:13' or capbool or face_permitted:
@@ -743,6 +779,13 @@ def setting(): #? 設定変更画面
                     config_data['lateness_time'] = lateness_time_int
                 
                 json_save()
+                
+                if values['-facial_recognition-']:
+                    if messagebox.askyesno("再起動", "顔認識には再起動が必要です。\n再起動しますか？"):
+                        python = sys.executable  # 現在実行中のPythonインタプリタを取得
+                        os.execl(python, python, *sys.argv)  # 現在のプログラムを再起動
+                    else:
+                        config_data["facial_recognition"] = False
                 
                 return
             
