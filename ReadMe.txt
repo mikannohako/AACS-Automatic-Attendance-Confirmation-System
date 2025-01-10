@@ -2,7 +2,7 @@
 
 「AACS」は部活などの出欠確認をサポートするソフトです。
 
-「Register.db」に登録されている名前またはIDを入力することで自動的にExcelに出欠を記録できます。
+「user_list.xlsx」に登録されている名前またはIDを入力することで自動的にExcelに出欠を記録できます。
 
 --------------------
 ■　主な機能
@@ -20,7 +20,10 @@
 --------------------
 ■　インストール
 
-・「AACS.zip」を解凍してください。
+1. Python公式サイトから最新のPython 3.12.x（推奨）をダウンロードし、インストールしてください。  
+2. 「AACS.zip」を任意のフォルダに解凍してください。
+3. 「launch.vbs」を実行してください。
+4. ソフトが正常に起動したら完了です。
 
 --------------------
 ■　アップデート
@@ -29,12 +32,11 @@
 
 アップデート用のファイルはGithubにあります。
 URL: https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases
-（公開されてない場合は404Not Foundと表示されることがあります。）
 
 --------------------
 ■　アンインストール
 
-・レジストリなどの変更はないので関連ファイルを削除するだけでアンインストールできます。
+1. 完全にアンインストールしたい場合はすべて、記録を残したい場合は「Attendance_records.xlsx」以外を削除してください。
 
 --------------------
 ■　使用方法
@@ -60,17 +62,40 @@ face_images/
   │    ├── front.jpg
   │    ├── left.jpg
   │    └── right.jpg
+  ├── 佐藤/
+  │    ├── front.jpg
+  │    ├── left.jpg
+  │    └── right.jpg
 
 2. 設定から顔認識を有効化してください。
-3. 再起動しますかと問われるのでOKを押して再起動してください。
+3. 「再起動しますか？」と問われるのでOKを押して再起動してください。
 ※対象の人物の名前は「user_list.xlsx」に設定されている名前と同じ名前にしてください。
 
---------------------
-■　免責事項
-
-Disclaimer: This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+（その他）
+・記録は「Attendance_records.xlsx」に保存されています。
 
 --------------------
-■　著作権
+■　ライセンス・著作権
 
-Copyright (c) 2024 mikannohako. All rights reserved.
+Copyright (C) 2025 mikannohako
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+このソフトウェアはGNU General Public License (GPL) に基づき、自由に再配布・改変することができます。ただし、使用に伴う損害等については一切の保証を行いません。詳細はライセンス条文をご覧ください。
+
+--------------------
+■　その他
+
+上記以外の詳細な情報はGithubで確認することができます。
+URL: https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System

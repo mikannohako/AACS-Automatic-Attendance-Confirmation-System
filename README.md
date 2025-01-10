@@ -13,6 +13,7 @@
     - [VSCode使用拡張機能](#vscode使用拡張機能)
       - [おそらく必須](#おそらく必須)
       - [あるとコードが見やすくなる](#あるとコードが見やすくなる)
+  - [ライセンスについて](#ライセンスについて)
 
 ## このソフトについて
 
@@ -96,3 +97,18 @@ Python初心者が練習などのために作ったソフトです。
 
 - [Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments)
 - [indent-rainbow](https://marketplace.visualstudio.com/items?itemName=oderwat.indent-rainbow)
+
+## ライセンスについて
+
+This project is licensed under the GNU General Public License v3.0.
+You can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+
+A copy of the license is included in the repository under the file LICENSE.
+
+本プロジェクトはGNU General Public License v3.0のもとで配布されています。  
+詳細は [GNU General Public License](https://www.gnu.org/licenses/) をご確認ください。
