@@ -47,6 +47,7 @@
                 "chcp",
                 "webbrowser",
                 "msvcrt",
-                "numpy"
+                "numpy",
+                "mikannohako"
         ]
 }
