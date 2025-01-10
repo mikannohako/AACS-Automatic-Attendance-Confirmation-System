@@ -502,7 +502,7 @@ def record(): #? 出席
             window["-INFO-"].update("顔認識は正常に稼働中です。")
             
             # 許容度（低いほど厳しい）
-            tolerance = 0.5
+            tolerance = config_data["tolerance"]
             
             data_file = "face_data.pkl"  # 保存するデータファイル名
             
@@ -733,6 +733,7 @@ def setting(): #? 設定変更画面
         Manual_late_time_setting = not Automatic_late_time_setting
         Lateness_Time = config_data['lateness_time']
         facial_recognition = config_data['facial_recognition']
+        tolerance = config_data['tolerance']
         
         # レイアウトの定義
         layout = [
@@ -745,6 +746,7 @@ def setting(): #? 設定変更画面
             [sg.Text('自動設定の場合の X を決めてください: '), sg.InputText(default_text=Lateness_Time, key="-LatenessTime-", disabled=Manual_late_time_setting, disabled_readonly_background_color='grey', enable_events=True)], 
             [sg.Checkbox('顔認識', default=facial_recognition, key='-facial_recognition-', enable_events=True)],
             [sg.Text('顔認識は環境によっては正常に動かない場合があります。また処理が重くなる場合があります。')],
+            [sg.Text('顔認識の精度を決めてください。（値が小さいほど厳しくなります。）: '), sg.InputText(default_text=tolerance, key="-LatenessTime-", enable_events=True)], 
             [sg.Button('戻る'), sg.Button('初期設定に戻す')]
         ]
         
@@ -764,6 +766,7 @@ def setting(): #? 設定変更画面
                 config_data['lateness_time'] = 15
                 
                 config_data["facial_recognition"] = False
+                config_data["tolerance"] = 0.5
                 
                 json_save()
                 
