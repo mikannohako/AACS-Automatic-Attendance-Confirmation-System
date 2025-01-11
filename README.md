@@ -111,5 +111,5 @@ See the GNU General Public License for more details.
 
 A copy of the license is included in the repository under the file LICENSE.
 
-本プロジェクトはGNU General Public License v3.0のもとで配布されています。 全文は`LICENSE`をご確認ください。 
+本プロジェクトはGNU General Public License v3.0のもとで配布されています。 全文は`LICENSE`をご確認ください。
 詳細は [GNU General Public License](https://www.gnu.org/licenses/) をご確認ください。
