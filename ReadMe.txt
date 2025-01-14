@@ -64,10 +64,10 @@ face_images/
   │    ├── front.jpg
   │    ├── left.jpg
   │    └── right.jpg
-  ├── 佐藤/
-  │    ├── front.jpg
-  │    ├── left.jpg
-  │    └── right.jpg
+  └── 佐藤/
+        ├── front.jpg
+        ├── left.jpg
+        └── right.jpg
 
 2. 設定から顔認識を有効化してください。
 3. 「再起動しますか？」と問われるのでOKを押して再起動してください。
