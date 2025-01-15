@@ -1,6 +1,31 @@
 @echo off
 chcp 65001
 
+REM Pythonの確認
+python --version >nul 2>&1
+if %ERRORLEVEL% equ 0 (
+    echo Python is installed.
+    python --version
+) else (
+    echo Python is not installed.
+    exit
+)
+
+REM CMakeの確認
+cmake --version >nul 2>&1
+if %ERRORLEVEL% equ 0 (
+    echo CMake is installed.
+    cmake --version
+) else (
+    echo CMake is not installed.
+    exit
+)
+
+if not exist "requirements.txt" (
+    echo requirements.txt is missing.
+    exit
+)
+
 REM .venv フォルダが存在するか確認
 if not exist .\.venv (
     echo 仮想環境が見つかりません。setupを開始します...
