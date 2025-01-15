@@ -36,6 +36,8 @@ Python初心者が練習などのために作ったソフトです。
 
 1. Python公式サイトから最新のPython 3.12.x（推奨）をダウンロードし、PATHのチェックボックスを有効にしてインストールしてください。  
    [Python公式ダウンロードページ](https://www.python.org/downloads/)
+2. CMake公式サイトから最新のCMakeをダウンロードし、PATHのチェックボックスを有効にしてインストールしてください。
+   [CMake公式ダウンロードページ](https://cmake.org/download/)
 2. このレポジトリの[最新のReleases](https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest)から`AACS.zip`をダウンロード
 3. 任意のフォルダに解凍
 4. `launch.vbs`を実行
