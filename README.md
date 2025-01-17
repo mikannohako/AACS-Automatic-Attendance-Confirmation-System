@@ -38,10 +38,10 @@ Python初心者が練習などのために作ったソフトです。
    [Python公式ダウンロードページ](https://www.python.org/downloads/)
 2. CMake公式サイトから最新のCMakeをダウンロードし、PATHのチェックボックスを有効にしてインストールしてください。  
    [CMake公式ダウンロードページ](https://cmake.org/download/)
-2. このレポジトリの[最新のReleases](https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest)から`AACS.zip`をダウンロード
-3. 任意のフォルダに解凍
-4. `launch.vbs`を実行
-5. 機能を選択
+3. このレポジトリの[最新のReleases](https://github.com/mikannohako/AACS-Automatic-Attendance-Confirmation-System/releases/latest)から`AACS.zip`をダウンロード
+4. 任意のフォルダに解凍
+5. `launch.vbs`を実行
+6. 機能を選択
 
 ※初回起動時は必ずネットワークに接続してください。
 ※初回起動時は起動に時間がかかる可能性があります。
