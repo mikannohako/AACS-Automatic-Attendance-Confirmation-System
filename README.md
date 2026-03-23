@@ -101,6 +101,8 @@ Python初心者が練習などのために作ったソフトです。
 - [Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments)
 - [indent-rainbow](https://marketplace.visualstudio.com/items?itemName=oderwat.indent-rainbow)
 
-## ライセンスについて
+## ライセンス・著作権について
 
 このプロジェクトはMITライセンスの下で公開されています。詳細は[LICENSE](LICENSE)ファイルをご確認ください。
+
+&copy; 2026 mikannohako All Rights Reserved.
